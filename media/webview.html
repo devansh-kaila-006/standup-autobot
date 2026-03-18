@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Standup Summary</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Marked for Markdown Parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Custom Tailwind Configuration to match VS Code Dark Theme -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        vsDark: '#1e1e1e',
+                        glassBorder: 'rgba(255, 255, 255, 0.1)',
+                        glassBg: 'rgba(30, 30, 30, 0.7)',
+                    },
+                    animation: {
+                        'blob': 'blob 7s infinite',
+                        'fade-in-up': 'fadeInUp 0.5s ease-out forwards',
+                    },
+                    keyframes: {
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
+                        },
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #1e1e1e; /* VS Code Default Dark */
+            overflow: hidden; /* Hide scrollbars on main body */
+        }
+        
+        /* Custom Scrollbar for the card content */
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Markdown Styles within the Card */
+        .prose h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; color: #fff; }
+        .prose h2 { font-size: 1.25rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem; color: #e2e8f0; }
+        .prose h3 { font-size: 1.1rem; font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem; color: #cbd5e1; }
+        .prose p { margin-bottom: 0.75rem; color: #94a3b8; line-height: 1.6; }
+        .prose ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; color: #94a3b8; }
+        .prose ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 1rem; color: #94a3b8; }
+        .prose li { margin-bottom: 0.25rem; }
+        .prose strong { color: #f1f5f9; font-weight: 600; }
+        .prose code { background: rgba(255,255,255,0.1); padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-family: monospace; font-size: 0.9em; color: #a5b4fc; }
+        .prose hr { border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 1.5rem 0; }
+        .prose a { color: #818cf8; text-decoration: none; }
+        .prose a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <!-- Placeholder for injection by TypeScript Provider -->
+    <script>/*__INITIAL_DATA__*/</script>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // --- Icons (SVG Components) ---
+        const CopyIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
+                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+            </svg>
+        );
+
+        const CheckIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+            </svg>
+        );
+
+        const BotIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 8V4H8"/>
+                <rect width="16" height="12" x="4" y="8" rx="2"/>
+                <path d="M2 14h2"/>
+                <path d="M20 14h2"/>
+                <path d="M15 13v2"/>
+                <path d="M9 13v2"/>
+            </svg>
+        );
+
+        // --- Main Component ---
+        const StandupCard = () => {
+            const [markdown, setMarkdown] = useState('');
+            const [copied, setCopied] = useState(false);
+            const [loading, setLoading] = useState(true);
+
+            // Get Initial Data injected by Extension
+            useEffect(() => {
+                if (window.initialMarkdown) {
+                    setMarkdown(window.initialMarkdown);
+                    setLoading(false);
+                }
+            }, []);
+
+            const handleCopy = async () => {
+                try {
+                    await navigator.clipboard.writeText(markdown);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                } catch (err) {
+                    console.error('Failed to copy text: ', err);
+                }
+            };
+
+            // Parse Markdown to HTML safely
+            const renderedContent = useMemo(() => {
+                return { __html: marked.parse(markdown) };
+            }, [markdown]);
+
+            // Get Current Date String
+            const dateString = new Date().toLocaleDateString('en-US', { 
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+            });
+
+            if (loading) {
+                return (
+                    <div className="h-screen w-full flex items-center justify-center text-gray-400">
+                        <div className="animate-pulse flex flex-col items-center">
+                            <BotIcon className="animate-bounce mb-4 text-indigo-400" />
+                            <span>Generating Standup...</span>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-[#1e1e1e]">
+                    
+                    {/* Background Ambient Effects */}
+                    <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+                    <div className="absolute top-0 -right-4 w-72 h-72 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+                    <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+
+                    {/* The Glass Card */}
+                    <div className="relative w-full max-w-2xl animate-fade-in-up">
+                        <div className="bg-glassBg backdrop-blur-xl border border-glassBorder rounded-2xl shadow-2xl overflow-hidden">
+                            
+                            {/* Card Header */}
+                            <div className="px-8 py-6 border-b border-white/5 flex justify-between items-center bg-white/5">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-indigo-500/20 rounded-lg text-indigo-400">
+                                        <BotIcon />
+                                    </div>
+                                    <div>
+                                        <h1 className="text-xl font-bold text-white tracking-tight">Standup Summary</h1>
+                                        <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">{dateString}</p>
+                                    </div>
+                                </div>
+                                
+                                <button 
+                                    onClick={handleCopy}
+                                    className={`
+                                        group flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300
+                                        ${copied 
+                                            ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                                            : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'
+                                        }
+                                    `}
+                                >
+                                    {copied ? (
+                                        <>
+                                            <CheckIcon />
+                                            <span>Copied!</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <CopyIcon />
+                                            <span>Copy to Slack</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+
+                            {/* Card Content (Scrollable) */}
+                            <div className="p-8 custom-scroll max-h-[70vh] overflow-y-auto bg-glassBg/50">
+                                <div 
+                                    className="prose prose-invert max-w-none"
+                                    dangerouslySetInnerHTML={renderedContent}
+                                />
+                                
+                                {/* Empty State Handling */}
+                                {!markdown.trim() && (
+                                    <div className="text-center py-10 text-gray-500 italic">
+                                        No standup content available.
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Card Footer / Gradient Fade */}
+                            <div className="h-4 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<StandupCard />);
+    </script>
+</body>
+</html>

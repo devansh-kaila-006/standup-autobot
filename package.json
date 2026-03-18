@@ -1,0 +1,66 @@
+{
+  "name": "standup-autobot",
+  "displayName": "Standup Autobot",
+  "description": "Silently tracks developer activity and generates daily standup summaries using local LLMs.",
+  "version": "0.0.1",
+  "publisher": "devansh-kaila-006",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/devansh-kaila-006/standup-autobot"
+  },
+  "keywords": [
+    "standup",
+    "productivity",
+    "ai",
+    "gemini",
+    "tracking"
+  ],
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "Standup Autobot",
+      "properties": {
+        "standup.triggerTime": {
+          "type": "string",
+          "default": "09:00",
+          "description": "Daily time to trigger standup summary generation (HH:MM)"
+        },
+        "standup.activityDuration": {
+          "type": "integer",
+          "default": 24,
+          "description": "Number of hours of activity to include in the summary"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "standup.generate",
+        "title": "Standup: Generate Daily Summary"
+      },
+      {
+        "command": "standup.setApiKey",
+        "title": "Standup: Set API Key"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "18.x",
+    "@types/vscode": "^1.80.0",
+    "typescript": "^5.0.0"
+  }
+}
