@@ -39,6 +39,55 @@
           "type": "integer",
           "default": 24,
           "description": "Number of hours of activity to include in the summary"
+        },
+        "standup.customPrompt": {
+          "type": "string",
+          "default": "",
+          "description": "Additional instructions to append to the Gemini prompt (e.g., 'Mention JIRA tickets')"
+        },
+        "standup.tone": {
+          "type": "string",
+          "enum": [
+            "brief",
+            "detailed",
+            "casual",
+            "formal"
+          ],
+          "default": "casual",
+          "description": "The tone of the generated standup summary"
+        },
+        "standup.outputLanguage": {
+          "type": "string",
+          "default": "English",
+          "description": "The language in which the summary should be generated"
+        },
+        "standup.notionPageId": {
+          "type": "string",
+          "default": "",
+          "description": "The Notion Page ID where standups should be appended"
+        },
+        "standup.jiraDomain": {
+          "type": "string",
+          "default": "",
+          "description": "Your Jira domain (e.g., 'company' for company.atlassian.net)"
+        },
+        "standup.jiraEmail": {
+          "type": "string",
+          "default": "",
+          "description": "Email for Jira API authentication"
+        },
+        "standup.jiraIssueKey": {
+          "type": "string",
+          "default": "",
+          "description": "Default Jira Issue Key to post comments to (can be overridden during export)"
+        },
+        "standup.ignorePatterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": ["**/node_modules/**", "**/.git/**"],
+          "description": "List of glob patterns to ignore during tracking"
         }
       }
     },
@@ -49,7 +98,35 @@
       },
       {
         "command": "standup.setApiKey",
-        "title": "Standup: Set API Key"
+        "title": "Standup: Set Gemini API Key"
+      },
+      {
+        "command": "standup.setNotionToken",
+        "title": "Standup: Set Notion API Token"
+      },
+      {
+        "command": "standup.setJiraToken",
+        "title": "Standup: Set Jira API Token"
+      },
+      {
+        "command": "standup.exportToNotion",
+        "title": "Standup: Export to Notion"
+      },
+      {
+        "command": "standup.exportToJira",
+        "title": "Standup: Post to Jira"
+      },
+      {
+        "command": "standup.viewHistory",
+        "title": "Standup: View History"
+      },
+      {
+        "command": "standup.toggleTracking",
+        "title": "Standup: Pause/Resume Tracking"
+      },
+      {
+        "command": "standup.previewData",
+        "title": "Standup: Preview Raw Data"
       }
     ]
   },

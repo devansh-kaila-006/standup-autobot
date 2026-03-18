@@ -33,6 +33,12 @@ export class GitTracker {
       return [];
     }
 
+    // Check if tracking is paused
+    const config = vscode.workspace.getConfiguration('standup');
+    if (config.get<boolean>('paused', false)) {
+        return [];
+    }
+
     const repoPath = workspaceFolder.uri.fsPath;
 
     try {

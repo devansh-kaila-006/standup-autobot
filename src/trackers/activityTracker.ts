@@ -1,4 +1,6 @@
 import * as vscode from 'vscode';
+import { isIgnored } from '../utils/ignore';
+import { ConfigManager } from '../utils/ConfigManager';
 
 interface FileStats {
   /** Total accumulated seconds the user was actively working on this file */
@@ -59,6 +61,17 @@ export class ActivityTracker {
    * Updates the last active timestamp and increments line counters.
    */
   private updateFileActivity(filePath: string, linesAdded: number) {
+    // 1. Check if tracking is paused
+    if (this.context.globalState.get<boolean>('standup.paused', false)) {
+      return;
+    }
+
+    // 2. Check if file is ignored
+    const ignorePatterns = ConfigManager.get<string[]>('ignorePatterns');
+    if (isIgnored(filePath, ignorePatterns)) {
+      return;
+    }
+
     const currentStats = this.stats.get(filePath) || {
       timeSeconds: 0,
       linesChanged: 0,
@@ -137,6 +150,13 @@ export class ActivityTracker {
     return report
       .sort((a, b) => b.linesChanged - a.linesChanged)
       .slice(0, limit);
+  }
+
+  /**
+   * Returns the total number of unique files touched during the session.
+   */
+  public getFileCount(): number {
+    return this.stats.size;
   }
 
   /**
