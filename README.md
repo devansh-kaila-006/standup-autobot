@@ -44,5 +44,9 @@ This extension contributes the following settings:
 - Integration with Gemini 3 Flash.
 - Automated scheduling and configurable lookback windows.
 
+## License
+
+**Standup Autobot** is a commercial product. A valid license or subscription is required for use. See the [LICENSE](LICENSE) file for the full text.
+
 ---
-**Enjoying Standup Autobot?** [Leave a review](https://marketplace.visualstudio.com/)!
+**Enjoying Standup Autobot?** [Get a license]([Your Licensing URL])

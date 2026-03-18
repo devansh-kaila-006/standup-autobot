@@ -4,7 +4,7 @@
   "description": "Silently tracks developer activity and generates daily standup summaries using local LLMs.",
   "version": "0.0.1",
   "publisher": "devansh-kaila-006",
-  "license": "MIT",
+  "license": "SEE LICENSE",
   "repository": {
     "type": "git",
     "url": "https://github.com/devansh-kaila-006/standup-autobot"
