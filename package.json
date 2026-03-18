@@ -127,6 +127,10 @@
       {
         "command": "standup.previewData",
         "title": "Standup: Preview Raw Data"
+      },
+      {
+        "command": "standup.generateWeeklyDigest",
+        "title": "Standup: Generate Weekly Digest"
       }
     ]
   },

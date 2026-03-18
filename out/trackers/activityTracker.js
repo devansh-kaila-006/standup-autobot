@@ -35,6 +35,8 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ActivityTracker = void 0;
 const vscode = __importStar(require("vscode"));
+const ignore_1 = require("../utils/ignore");
+const ConfigManager_1 = require("../utils/ConfigManager");
 class ActivityTracker {
     constructor(context) {
         this.context = context;
@@ -67,6 +69,15 @@ class ActivityTracker {
      * Updates the last active timestamp and increments line counters.
      */
     updateFileActivity(filePath, linesAdded) {
+        // 1. Check if tracking is paused
+        if (this.context.globalState.get('standup.paused', false)) {
+            return;
+        }
+        // 2. Check if file is ignored
+        const ignorePatterns = ConfigManager_1.ConfigManager.get('ignorePatterns');
+        if ((0, ignore_1.isIgnored)(filePath, ignorePatterns)) {
+            return;
+        }
         const currentStats = this.stats.get(filePath) || {
             timeSeconds: 0,
             linesChanged: 0,
@@ -133,6 +144,12 @@ class ActivityTracker {
         return report
             .sort((a, b) => b.linesChanged - a.linesChanged)
             .slice(0, limit);
+    }
+    /**
+     * Returns the total number of unique files touched during the session.
+     */
+    getFileCount() {
+        return this.stats.size;
     }
     /**
      * Save current stats to VS Code global state.

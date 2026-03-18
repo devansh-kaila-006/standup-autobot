@@ -34,6 +34,7 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TerminalTracker = void 0;
+const vscode = __importStar(require("vscode"));
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 const os = __importStar(require("os"));
@@ -46,6 +47,13 @@ class TerminalTracker {
      * On Windows, this primarily attempts to read the PowerShell history file.
      */
     async getTerminalHistory(limit = 20) {
+        // Check if tracking is paused (global state)
+        // Note: For trackers, we might want to check workspace config or context
+        // But since we don't have context here, we'll check workspace config as a proxy
+        // or the extension should pass the state.
+        if (vscode.workspace.getConfiguration('standup').get('paused', false)) {
+            return [];
+        }
         // Attempt 1: Read PowerShell History File (Most reliable for persistence)
         const psHistoryPath = path.join(os.homedir(), 'AppData', 'Roaming', 'Microsoft', 'Windows', 'PowerShell', 'PSReadline', 'ConsoleHost_history.txt');
         if (fs.existsSync(psHistoryPath)) {

@@ -1,8 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.StandupGenerator = void 0;
+const ActivityAnalyzer_1 = require("../utils/ActivityAnalyzer");
 /**
- * Service class to generate daily standups using local LLM (Ollama)
+ * Service class to generate daily standups using Gemini AI
  */
 class StandupGenerator {
     constructor(config = {}) {
@@ -13,14 +14,24 @@ class StandupGenerator {
      * Generates the standup summary based on developer activity.
      * @param data The JSON data gathered from VS Code.
      * @param apiKey The Google Gemini API key.
+     * @param settings The standup generation settings (tone, language, custom prompt).
      * @param durationHours The lookback duration in hours.
      * @returns A Markdown string containing the standup.
      */
-    async generateStandup(data, apiKey, durationHours = 24) {
-        const prompt = this.buildPrompt(data, durationHours);
+    async generateStandup(data, apiKey, settings = { tone: 'casual', outputLanguage: 'English' }, durationHours = 24) {
+        // 1. Analyze the activity data
+        const analysis = ActivityAnalyzer_1.ActivityAnalyzer.analyze(data);
+        // 2. Build the prompt with analysis and settings
+        const prompt = this.buildPrompt(data, analysis, settings, durationHours);
         if (!apiKey) {
             throw new Error('Google Gemini API Key is required.');
         }
+        return await this.generateContent(prompt, apiKey);
+    }
+    /**
+     * Call Gemini API to generate content from prompt
+     */
+    async generateContent(prompt, apiKey) {
         try {
             const response = await fetch(this.baseUrl, {
                 method: 'POST',
@@ -59,14 +70,20 @@ class StandupGenerator {
             }
         }
         catch (error) {
-            console.error('Failed to generate standup:', error);
+            console.error('Failed to generate content:', error);
             throw new Error(`Failed to connect to Gemini API: ${error.message}`);
         }
     }
     /**
-     * Formats the raw data into a structured prompt for the LLM.
+     * Formats the raw data and analysis into a structured prompt for the LLM.
      */
-    buildPrompt(data, durationHours) {
+    buildPrompt(data, analysis, settings, durationHours) {
+        const toneInstructions = {
+            brief: "Keep it extremely short. Use bullet points only. No fluff.",
+            detailed: "Provide a comprehensive report. Explain the 'why' behind the changes.",
+            casual: "Use a friendly, conversational tone (like a Slack message to a teammate).",
+            formal: "Use professional language suitable for email reports or stakeholder updates."
+        };
         const filesList = data.topFiles
             .map((f) => `- ${f.file} (Time spent: ${f.timeSpent}, Lines changed: ${f.linesChanged})`)
             .join('\n');
@@ -76,15 +93,30 @@ class StandupGenerator {
         const commandsList = data.commands
             .map((c) => `- ${c}`)
             .join('\n');
+        const tagsStr = analysis.tags.length > 0 ? `Detected Activity Types: ${analysis.tags.join(', ')}.` : '';
+        let blockersStr = 'None detected.';
+        if (analysis.blockers.length > 0) {
+            blockersStr = analysis.blockers.map(b => `- ${b}`).join('\n');
+        }
+        const confidenceNote = analysis.isLowConfidence
+            ? `\n⚠️ NOTE: This summary has low confidence because: ${analysis.confidenceReason}\n`
+            : '';
         return `
-You are a senior developer's productivity assistant. Synthesize the following raw VS Code activity logs into a 3-bullet-point Daily Standup update for Slack.
+You are a senior developer's productivity assistant. Synthesize the following raw VS Code activity logs into a Daily Standup update for Slack.
 
 ### Instructions:
-1. **Focus strongly on the 'Active Files'** data to deduce what feature was being built (e.g., if they spent 3 hours in StripePayment.tsx, they were building the Stripe integration).
+1. **Focus strongly on the 'Active Files'** data to deduce what feature was being built.
 2. **Correlate Git commits with the Active Files** to show what was finished vs what is currently in progress.
-3. **List any heavy terminal commands** (like npm install <weird-package>) as research or environment setup.
+3. **List any heavy terminal commands** as research or environment setup.
 4. **Format as:** [Completed], [In Progress], and [Notes/Blockers]. 
 5. **CRITICAL: Do not use any emojis in the output.**
+6. **Tone:** ${toneInstructions[settings.tone] || toneInstructions.casual}
+7. **Output Language:** ${settings.outputLanguage}
+${settings.customPrompt ? `8. **Custom Instruction:** ${settings.customPrompt}` : ''}
+
+### Analysis Context:
+${tagsStr}
+${confidenceNote}
 
 ### Data Input (Last ${durationHours} Hours):
 1. **Top Edited Files (Activity Log):**
@@ -96,10 +128,10 @@ ${commitsList}
 3. **Terminal Commands:**
 ${commandsList}
 
-### Blockers
-[Mention any inferred blockers. If nothing suggests a blocker, output "None"]
+### Blockers Section:
+${blockersStr}
 
-**Tone:** Concise and professional.
+**Generate the standup summary now in ${settings.outputLanguage}:**
 `;
     }
 }

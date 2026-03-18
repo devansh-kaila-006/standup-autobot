@@ -56,6 +56,11 @@ class GitTracker {
             console.warn('GitTracker: No workspace folder found.');
             return [];
         }
+        // Check if tracking is paused
+        const config = vscode.workspace.getConfiguration('standup');
+        if (config.get('paused', false)) {
+            return [];
+        }
         const repoPath = workspaceFolder.uri.fsPath;
         try {
             // 2. Get the current Git user name

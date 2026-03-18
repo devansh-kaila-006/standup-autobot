@@ -73,12 +73,33 @@ class StandupCardProvider {
                     if (message.text) {
                         try {
                             await vscode.env.clipboard.writeText(message.text);
-                            // Notify the webview that the copy was successful
-                            this._panel.webview.postMessage({ command: 'copiedConfirmation' });
+                            this._panel.webview.postMessage({ command: 'actionConfirmation', type: 'copy' });
                             vscode.window.showInformationMessage('Standup copied to clipboard!');
                         }
                         catch (error) {
                             vscode.window.showErrorMessage('Failed to copy to clipboard');
+                        }
+                    }
+                    return;
+                case 'copyToTeams':
+                    if (message.text) {
+                        try {
+                            await vscode.commands.executeCommand('standup.copyForTeams', message.text);
+                            this._panel.webview.postMessage({ command: 'actionConfirmation', type: 'teams' });
+                        }
+                        catch (error) {
+                            vscode.window.showErrorMessage('Failed to copy for Teams');
+                        }
+                    }
+                    return;
+                case 'sendEmail':
+                    if (message.text) {
+                        try {
+                            await vscode.commands.executeCommand('standup.sendEmail', message.text);
+                            this._panel.webview.postMessage({ command: 'actionConfirmation', type: 'email' });
+                        }
+                        catch (error) {
+                            vscode.window.showErrorMessage('Failed to open email client');
                         }
                     }
                     return;
@@ -160,14 +181,14 @@ class StandupCardProvider {
             const initialMarkdown = window.initialMarkdown || "No content provided.";
             
             const [markdown, setMarkdown] = useState(initialMarkdown);
-            const [copied, setCopied] = useState(false);
+            const [status, setStatus] = useState({ type: null, active: false });
 
             useEffect(() => {
                 const handleMessage = (event) => {
                     const message = event.data;
-                    if (message.command === 'copiedConfirmation') {
-                        setCopied(true);
-                        setTimeout(() => setCopied(false), 2000);
+                    if (message.command === 'actionConfirmation') {
+                        setStatus({ type: message.type, active: true });
+                        setTimeout(() => setStatus({ type: null, active: false }), 2000);
                     }
                 };
                 window.addEventListener('message', handleMessage);
@@ -175,10 +196,15 @@ class StandupCardProvider {
             }, []);
 
             const handleCopyClick = () => {
-                vscode.postMessage({
-                    command: 'copyToClipboard',
-                    text: markdown
-                });
+                vscode.postMessage({ command: 'copyToClipboard', text: markdown });
+            };
+
+            const handleTeamsClick = () => {
+                vscode.postMessage({ command: 'copyToTeams', text: markdown });
+            };
+
+            const handleEmailClick = () => {
+                vscode.postMessage({ command: 'sendEmail', text: markdown });
             };
 
             const createMarkup = () => {
@@ -205,27 +231,37 @@ class StandupCardProvider {
                             <div className="prose prose-invert prose-sm max-w-none" dangerouslySetInnerHTML={createMarkup()} />
                         </div>
 
-                        <div className="p-4 bg-[#2d2d2d] border-t border-[#3e3e42]">
+                        <div className="p-4 bg-[#2d2d2d] border-t border-[#3e3e42] flex flex-col gap-3">
                             <button
                                 onClick={handleCopyClick}
-                                className={copied 
-                                    ? 'w-full relative overflow-hidden group flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium text-white transition-all duration-300 active:scale-95 bg-green-600 shadow-[0_0_15px_rgba(22,163,74,0.5)]' 
-                                    : 'w-full relative overflow-hidden group flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium text-white transition-all duration-300 active:scale-95 bg-blue-600 hover:bg-blue-500 hover:shadow-[0_0_20px_rgba(59,130,246,0.4)]'}
+                                className={status.active && status.type === 'copy'
+                                    ? 'w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg font-medium text-white bg-green-600 transition-all duration-300' 
+                                    : 'w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg font-medium text-white bg-blue-600 hover:bg-blue-500 transition-all duration-300'}
                             >
-                                <span className="relative z-10 flex items-center gap-2 text-sm">
-                                    {copied ? (
-                                        <>
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 6 9 17l-5-5"/></svg>
-                                            Copied!
-                                        </>
-                                    ) : (
-                                        <>
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                                            Copy for Slack
-                                        </>
-                                    )}
+                                <span className="flex items-center gap-2 text-xs">
+                                    {status.active && status.type === 'copy' ? 'Copied to Slack!' : 'Copy for Slack'}
                                 </span>
                             </button>
+
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={handleTeamsClick}
+                                    className={status.active && status.type === 'teams'
+                                        ? 'flex-grow flex items-center justify-center gap-2 py-2 px-4 rounded-lg font-medium text-white bg-green-600 transition-all duration-300' 
+                                        : 'flex-grow flex items-center justify-center gap-2 py-2 px-4 rounded-lg font-medium text-white bg-[#3e3e42] hover:bg-[#4e4e52] transition-all duration-300'}
+                                >
+                                    <span className="text-[10px]">
+                                        {status.active && status.type === 'teams' ? 'Copied for Teams!' : 'Copy for Teams'}
+                                    </span>
+                                </button>
+                                
+                                <button
+                                    onClick={handleEmailClick}
+                                    className="flex-grow flex items-center justify-center gap-2 py-2 px-4 rounded-lg font-medium text-white bg-[#3e3e42] hover:bg-[#4e4e52] transition-all duration-300"
+                                >
+                                    <span className="text-[10px]">Send via Email</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
