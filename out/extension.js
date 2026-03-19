@@ -173,7 +173,20 @@ function activate(context) {
     const sendEmailDisposable = vscode.commands.registerCommand('standup.sendEmail', (text) => exporterService.exportToEmail(text));
     // Register all to subscriptions
     context.subscriptions.push(activityTracker, generateDisposable, toggleTrackingDisposable, previewDataDisposable, weeklyDigestDisposable, setApiKeyDisposable, setNotionTokenDisposable, setJiraTokenDisposable, exportToNotionDisposable, exportToJiraDisposable, copyTeamsDisposable, sendEmailDisposable);
-    // --- 3. Status Bar ---
+    // --- 3. Webview Persistence ---
+    if (vscode.window.registerWebviewPanelSerializer) {
+        vscode.window.registerWebviewPanelSerializer(DashboardPanel_1.DashboardPanel.viewType, {
+            async deserializeWebviewPanel(webviewPanel, state) {
+                console.log('Reviving Standup Dashboard...');
+                DashboardPanel_1.DashboardPanel.revive(webviewPanel, context.extensionUri, {
+                    isPaused: context.globalState.get('standup.paused', false),
+                    history: historyService.getHistory(),
+                    heatmapData: historyService.getWeeklyActivityIntensity()
+                });
+            }
+        });
+    }
+    // --- 4. Status Bar ---
     const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     statusBarItem.command = 'standup.toggleTracking';
     context.subscriptions.push(statusBarItem);
@@ -241,18 +254,6 @@ function activate(context) {
             heatmapData: historyService.getWeeklyActivityIntensity()
         });
     }));
-    // Register Webview Serializer for persistence across reloads
-    if (vscode.window.registerWebviewPanelSerializer) {
-        vscode.window.registerWebviewPanelSerializer(DashboardPanel_1.DashboardPanel.viewType, {
-            async deserializeWebviewPanel(webviewPanel, state) {
-                DashboardPanel_1.DashboardPanel.revive(webviewPanel, context.extensionUri, {
-                    isPaused: context.globalState.get('standup.paused', false),
-                    history: historyService.getHistory(),
-                    heatmapData: historyService.getWeeklyActivityIntensity()
-                });
-            }
-        });
-    }
     setupScheduler();
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
         if (e.affectsConfiguration('standup.triggerTime'))
