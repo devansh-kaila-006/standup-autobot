@@ -73,6 +73,25 @@ class HistoryService {
         const cutoffTime = sevenDaysAgo.getTime();
         return history.filter(entry => entry.timestamp > cutoffTime);
     }
+    /**
+     * Gets activity intensity for the last 7 days (normalized 0.0 to 1.0).
+     */
+    getWeeklyActivityIntensity() {
+        const activities = this.getAllActivity();
+        const today = new Date();
+        const result = new Array(7).fill(0);
+        for (let i = 0; i < 7; i++) {
+            const d = new Date();
+            d.setDate(today.getDate() - (6 - i)); // 0: 6 days ago, 6: today
+            const dateStr = d.toISOString().split('T')[0];
+            const activity = activities.find(a => a.date === dateStr);
+            if (activity) {
+                // Assume 10+ files per day is "high" (1.0)
+                result[i] = Math.min(activity.fileCount / 10, 1.0);
+            }
+        }
+        return result;
+    }
 }
 exports.HistoryService = HistoryService;
 HistoryService.HISTORY_KEY = 'standup.history';

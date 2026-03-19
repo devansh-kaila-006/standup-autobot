@@ -8,9 +8,9 @@ import { setApiKeyCommand, ensureApiKey } from './utils/auth';
 import { ExporterService } from './services/ExporterService';
 import { HistoryService } from './services/HistoryService';
 import { DigestService } from './services/DigestService';
-import { HistoryPanel } from './webviews/HistoryPanel';
 import { ConfigManager } from './utils/ConfigManager';
 import { DataAuditPanel } from './webviews/DataAuditPanel';
+import { DashboardPanel } from './webviews/DashboardPanel';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Standup Autobot is now active!');
@@ -51,9 +51,13 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     // View History & Trends
-    const historyDisposable = vscode.commands.registerCommand('standup.viewHistory', () => {
-        HistoryPanel.createOrShow(context.extensionUri, context);
-    });
+    context.subscriptions.push(vscode.commands.registerCommand('standup.viewHistory', () => {
+        DashboardPanel.createOrShow(context.extensionUri, {
+            isPaused: context.globalState.get<boolean>('standup.paused', false),
+            history: historyService.getHistory(),
+            heatmapData: historyService.getWeeklyActivityIntensity()
+        });
+    }));
 
     // Privacy & Control
     const toggleTrackingDisposable = vscode.commands.registerCommand('standup.toggleTracking', async () => {
@@ -134,12 +138,26 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Register all to subscriptions
     context.subscriptions.push(
-        activityTracker, generateDisposable, historyDisposable, toggleTrackingDisposable, 
+        activityTracker, generateDisposable, toggleTrackingDisposable, 
         previewDataDisposable, weeklyDigestDisposable, setApiKeyDisposable, setNotionTokenDisposable, 
         setJiraTokenDisposable, exportToNotionDisposable, exportToJiraDisposable, copyTeamsDisposable, sendEmailDisposable
     );
 
-    // --- 3. Status Bar ---
+    // --- 3. Webview Persistence ---
+    if (vscode.window.registerWebviewPanelSerializer) {
+        vscode.window.registerWebviewPanelSerializer(DashboardPanel.viewType, {
+            async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: any) {
+                console.log('Reviving Standup Dashboard...');
+                DashboardPanel.revive(webviewPanel, context.extensionUri, {
+                    isPaused: context.globalState.get<boolean>('standup.paused', false),
+                    history: historyService.getHistory(),
+                    heatmapData: historyService.getWeeklyActivityIntensity()
+                });
+            }
+        });
+    }
+
+    // --- 4. Status Bar ---
     const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     statusBarItem.command = 'standup.toggleTracking';
     context.subscriptions.push(statusBarItem);
@@ -149,6 +167,13 @@ export function activate(context: vscode.ExtensionContext) {
         statusBarItem.text = isPaused ? `$(debug-pause) Standup: Paused` : `$(pulse) Standup: Tracking`;
         statusBarItem.tooltip = isPaused ? 'Tracking is paused. Click to resume.' : 'Tracking activity... Click to pause.';
         statusBarItem.color = isPaused ? new vscode.ThemeColor('errorForeground') : undefined;
+        
+        // Refresh dashboard if open
+        DashboardPanel.update({
+            isPaused,
+            history: historyService.getHistory(),
+            heatmapData: historyService.getWeeklyActivityIntensity()
+        });
     }
     updateStatusBar();
     statusBarItem.show();
@@ -197,6 +222,13 @@ export function activate(context: vscode.ExtensionContext) {
         }
     }
 
+    context.subscriptions.push(vscode.commands.registerCommand('standup.showDashboard', () => {
+        DashboardPanel.createOrShow(context.extensionUri, {
+            isPaused: context.globalState.get<boolean>('standup.paused', false),
+            history: historyService.getHistory(),
+            heatmapData: historyService.getWeeklyActivityIntensity()
+        });
+    }));
     setupScheduler();
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
         if (e.affectsConfiguration('standup.triggerTime')) setupScheduler();

@@ -23,7 +23,8 @@
     "Other"
   ],
   "activationEvents": [
-    "onStartupFinished"
+    "onStartupFinished",
+    "onWebviewPanel:standupAutobot.dashboard"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -131,6 +132,10 @@
       {
         "command": "standup.generateWeeklyDigest",
         "title": "Standup: Generate Weekly Digest"
+      },
+      {
+        "command": "standup.showDashboard",
+        "title": "Standup: Dashboard"
       }
     ]
   },
