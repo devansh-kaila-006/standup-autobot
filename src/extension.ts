@@ -12,16 +12,32 @@ import { ConfigManager } from './utils/ConfigManager';
 import { DataAuditPanel } from './webviews/DataAuditPanel';
 import { DashboardPanel } from './webviews/DashboardPanel';
 
-export function activate(context: vscode.ExtensionContext) {
-    console.log('Standup Autobot is now active!');
+export async function activate(context: vscode.ExtensionContext) {
+    console.log('Standup Autobot: Activating...');
 
-    // --- 1. Dependencies ---
-    const activityTracker = new ActivityTracker(context);
-    const gitTracker = new GitTracker();
-    const terminalTracker = new TerminalTracker();
-    const standupGenerator = new StandupGenerator();
-    const exporterService = new ExporterService();
-    const historyService = new HistoryService(context);
+    try {
+        const historyService = new HistoryService(context);
+        
+        // --- 0. Webview Persistence (Must be early!) ---
+        if (vscode.window.registerWebviewPanelSerializer) {
+            vscode.window.registerWebviewPanelSerializer(DashboardPanel.viewType, {
+                async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: any) {
+                    console.log('Standup Autobot: Reviving Dashboard...');
+                    DashboardPanel.revive(webviewPanel, context.extensionUri, {
+                        isPaused: context.globalState.get<boolean>('standup.paused', false),
+                        history: historyService.getHistory(),
+                        heatmapData: historyService.getWeeklyActivityIntensity()
+                    });
+                }
+            });
+        }
+
+        // --- 1. Dependencies ---
+        const activityTracker = new ActivityTracker(context);
+        const gitTracker = new GitTracker();
+        const terminalTracker = new TerminalTracker();
+        const standupGenerator = new StandupGenerator();
+        const exporterService = new ExporterService();
     
     // --- 2. Register ALL Commands EARLY ---
 
@@ -143,20 +159,6 @@ export function activate(context: vscode.ExtensionContext) {
         setJiraTokenDisposable, exportToNotionDisposable, exportToJiraDisposable, copyTeamsDisposable, sendEmailDisposable
     );
 
-    // --- 3. Webview Persistence ---
-    if (vscode.window.registerWebviewPanelSerializer) {
-        vscode.window.registerWebviewPanelSerializer(DashboardPanel.viewType, {
-            async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: any) {
-                console.log('Reviving Standup Dashboard...');
-                DashboardPanel.revive(webviewPanel, context.extensionUri, {
-                    isPaused: context.globalState.get<boolean>('standup.paused', false),
-                    history: historyService.getHistory(),
-                    heatmapData: historyService.getWeeklyActivityIntensity()
-                });
-            }
-        });
-    }
-
     // --- 4. Status Bar ---
     const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     statusBarItem.command = 'standup.toggleTracking';
@@ -233,6 +235,11 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
         if (e.affectsConfiguration('standup.triggerTime')) setupScheduler();
     }));
+
+    } catch (error: any) {
+        console.error('Standup Autobot: Activation failed!', error);
+        vscode.window.showErrorMessage(`Standup Autobot failed to start: ${error.message}`);
+    }
 }
 
 export function deactivate() {}
