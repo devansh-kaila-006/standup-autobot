@@ -10,12 +10,13 @@
 - 📋 **Export Anywhere**: One-click export to **Notion**, **Jira**, **Microsoft Teams**, or **Email**.
 - 📝 **Weekly Digests**: Automated AI-generated Friday summaries of your entire week.
 - 🔒 **Privacy & Audit**: Preview your raw JSON data before sending it to the AI. Integrated ignore patterns (`node_modules`, `.git`) ensure your privacy.
-- ⚙️ **Project-Level Settings**: Use a `.standup.json` in your workspace to override global configurations.
+- ⚙️ **Project-Level Settings**: Use a `.standup.json` in your workspace to override global configurations for `triggerTime`, `tone`, `customPrompt`, and more.
+- 🚦 **Smart Alerts**: 2-minute pre-standup preview and idle reminders if no activity is tracked by 2 PM.
 
 ## Getting Started
 
 1. **Install** the extension from the VS Code Marketplace.
-2. **Set your API Key**: Run `Standup: Set API Key` and paste your Google Gemini Key.
+2. **Set your API Key**: Run `Standup: Set Gemini API Key` and paste your Google Gemini Key.
 3. **Configure Settings**: Go to `File > Preferences > Settings` and search for "Standup Autobot".
 4. **Project Overrides**: Add a `.standup.json` to your workspace root:
    ```json
@@ -29,9 +30,10 @@
 ## Commands & Usage
 
 - **Standup: Generate Daily Summary**: Manual trigger for the daily report.
-- **Standup: View History**: Open the dashboard to see past reports and the activity heatmap.
+- **Standup: View History**: Open the **History & Trends** panel to see past reports and the activity heatmap.
 - **Standup: Preview Raw Data**: Review exactly what JSON payload is being sent to the AI.
 - **Standup: Pause/Resume Tracking**: Toggle activity monitoring on/off via status bar or command.
+- **Standup: Set Gemini API Key**: Securely store your Google Gemini AI key.
 - **Standup: Set Notion/Jira Tokens**: Securely store your API tokens for direct exports.
 
 ## Configuration (.standup.json Schema)
