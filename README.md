@@ -53,6 +53,3 @@
 ## License
 
 **Standup Autobot** is a commercial product. A valid license or subscription is required for use. See the [LICENSE](LICENSE) file for the full text.
-
----
-**Enjoying Standup Autobot?** [Get a premium license]([Your Licensing URL])
