@@ -9,37 +9,21 @@ import { ExporterService } from './services/ExporterService';
 import { HistoryService } from './services/HistoryService';
 import { DigestService } from './services/DigestService';
 import { ConfigManager } from './utils/ConfigManager';
+import { HistoryPanel } from './webviews/HistoryPanel';
 import { DataAuditPanel } from './webviews/DataAuditPanel';
-import { DashboardPanel } from './webviews/DashboardPanel';
 
-export async function activate(context: vscode.ExtensionContext) {
-    console.log('Standup Autobot: Activating...');
+export function activate(context: vscode.ExtensionContext) {
+    console.log('Standup Autobot is now active!');
 
-    try {
-        const historyService = new HistoryService(context);
-        
-        // --- 0. Webview Persistence (Must be early!) ---
-        if (vscode.window.registerWebviewPanelSerializer) {
-            vscode.window.registerWebviewPanelSerializer(DashboardPanel.viewType, {
-                async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: any) {
-                    console.log('Standup Autobot: Reviving Dashboard...');
-                    DashboardPanel.revive(webviewPanel, context.extensionUri, {
-                        isPaused: context.globalState.get<boolean>('standup.paused', false),
-                        history: historyService.getHistory(),
-                        heatmapData: historyService.getWeeklyActivityIntensity()
-                    });
-                }
-            });
-        }
-
-        // --- 1. Dependencies ---
-        const activityTracker = new ActivityTracker(context);
-        const gitTracker = new GitTracker();
-        const terminalTracker = new TerminalTracker();
-        const standupGenerator = new StandupGenerator();
-        const exporterService = new ExporterService();
+    // --- 1. Dependencies ---
+    const activityTracker = new ActivityTracker(context);
+    const gitTracker = new GitTracker();
+    const terminalTracker = new TerminalTracker();
+    const standupGenerator = new StandupGenerator();
+    const exporterService = new ExporterService();
+    const historyService = new HistoryService(context);
     
-    // --- 2. Register ALL Commands EARLY ---
+    // --- 2. Register Commands ---
 
     // Generate Daily
     const generateDisposable = vscode.commands.registerCommand('standup.generate', async () => {
@@ -66,16 +50,12 @@ export async function activate(context: vscode.ExtensionContext) {
         });
     });
 
-    // View History & Trends
-    context.subscriptions.push(vscode.commands.registerCommand('standup.viewHistory', () => {
-        DashboardPanel.createOrShow(context.extensionUri, {
-            isPaused: context.globalState.get<boolean>('standup.paused', false),
-            history: historyService.getHistory(),
-            heatmapData: historyService.getWeeklyActivityIntensity()
-        });
-    }));
+    // View History
+    const historyDisposable = vscode.commands.registerCommand('standup.viewHistory', () => {
+        HistoryPanel.createOrShow(context.extensionUri, context);
+    });
 
-    // Privacy & Control
+    // Toggle Tracking
     const toggleTrackingDisposable = vscode.commands.registerCommand('standup.toggleTracking', async () => {
         const isPaused = context.globalState.get<boolean>('standup.paused', false);
         await context.globalState.update('standup.paused', !isPaused);
@@ -83,6 +63,7 @@ export async function activate(context: vscode.ExtensionContext) {
         vscode.window.showInformationMessage(`Standup tracking ${!isPaused ? 'paused' : 'resumed'}.`);
     });
 
+    // Data Audit
     const previewDataDisposable = vscode.commands.registerCommand('standup.previewData', async () => {
         const data = {
             topFiles: activityTracker.getTopFiles(10),
@@ -113,7 +94,7 @@ export async function activate(context: vscode.ExtensionContext) {
         });
     });
 
-    // Export & Keys
+    // API Keys
     const setApiKeyDisposable = vscode.commands.registerCommand('standup.setApiKey', () => setApiKeyCommand(context));
     const setNotionTokenDisposable = vscode.commands.registerCommand('standup.setNotionToken', async () => {
         const token = await vscode.window.showInputBox({ prompt: 'Enter Notion Token', password: true });
@@ -124,11 +105,13 @@ export async function activate(context: vscode.ExtensionContext) {
         if (token) await context.secrets.store('standup.jiraToken', token);
     });
 
+    // Exports
     const exportToNotionDisposable = vscode.commands.registerCommand('standup.exportToNotion', async () => {
         const token = await context.secrets.get('standup.notionToken');
-        const pageId = vscode.workspace.getConfiguration('standup').get<string>('notionPageId');
+        const config = vscode.workspace.getConfiguration('standup');
+        const pageId = config.get<string>('notionPageId');
         const lastMarkdown = context.globalState.get<string>('standup.lastGenerated');
-        if (!token || !pageId || !lastMarkdown) { vscode.window.showErrorMessage('Config or standup missing.'); return; }
+        if (!token || !pageId || !lastMarkdown) { vscode.window.showErrorMessage('Config missing.'); return; }
         const msg = await exporterService.exportToNotion(lastMarkdown, { token, pageId });
         vscode.window.showInformationMessage(msg);
     });
@@ -145,7 +128,6 @@ export async function activate(context: vscode.ExtensionContext) {
         vscode.window.showInformationMessage(msg);
     });
 
-    // Webview internal bridge
     const copyTeamsDisposable = vscode.commands.registerCommand('standup.copyForTeams', async (text: string) => {
         await vscode.env.clipboard.writeText(exporterService.formatForTeams(text));
         vscode.window.showInformationMessage('Copied!');
@@ -154,12 +136,12 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // Register all to subscriptions
     context.subscriptions.push(
-        activityTracker, generateDisposable, toggleTrackingDisposable, 
+        activityTracker, generateDisposable, historyDisposable, toggleTrackingDisposable, 
         previewDataDisposable, weeklyDigestDisposable, setApiKeyDisposable, setNotionTokenDisposable, 
         setJiraTokenDisposable, exportToNotionDisposable, exportToJiraDisposable, copyTeamsDisposable, sendEmailDisposable
     );
 
-    // --- 4. Status Bar ---
+    // --- 3. Status Bar ---
     const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     statusBarItem.command = 'standup.toggleTracking';
     context.subscriptions.push(statusBarItem);
@@ -169,18 +151,11 @@ export async function activate(context: vscode.ExtensionContext) {
         statusBarItem.text = isPaused ? `$(debug-pause) Standup: Paused` : `$(pulse) Standup: Tracking`;
         statusBarItem.tooltip = isPaused ? 'Tracking is paused. Click to resume.' : 'Tracking activity... Click to pause.';
         statusBarItem.color = isPaused ? new vscode.ThemeColor('errorForeground') : undefined;
-        
-        // Refresh dashboard if open
-        DashboardPanel.update({
-            isPaused,
-            history: historyService.getHistory(),
-            heatmapData: historyService.getWeeklyActivityIntensity()
-        });
     }
     updateStatusBar();
     statusBarItem.show();
 
-    // --- 4. Initialization & Scheduler ---
+    // --- 4. Scheduler & Notifications ---
     const storageKey = 'standup.activityLog';
     if (!context.globalState.get(storageKey)) {
         context.globalState.update(storageKey, { lastUpdated: null, dailyLogs: [] });
@@ -224,22 +199,10 @@ export async function activate(context: vscode.ExtensionContext) {
         }
     }
 
-    context.subscriptions.push(vscode.commands.registerCommand('standup.showDashboard', () => {
-        DashboardPanel.createOrShow(context.extensionUri, {
-            isPaused: context.globalState.get<boolean>('standup.paused', false),
-            history: historyService.getHistory(),
-            heatmapData: historyService.getWeeklyActivityIntensity()
-        });
-    }));
     setupScheduler();
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
         if (e.affectsConfiguration('standup.triggerTime')) setupScheduler();
     }));
-
-    } catch (error: any) {
-        console.error('Standup Autobot: Activation failed!', error);
-        vscode.window.showErrorMessage(`Standup Autobot failed to start: ${error.message}`);
-    }
 }
 
 export function deactivate() {}

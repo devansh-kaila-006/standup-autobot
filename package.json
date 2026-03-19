@@ -132,10 +132,6 @@
       {
         "command": "standup.generateWeeklyDigest",
         "title": "Standup: Generate Weekly Digest"
-      },
-      {
-        "command": "standup.showDashboard",
-        "title": "Standup: Dashboard"
       }
     ]
   },
