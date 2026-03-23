@@ -134,7 +134,8 @@ class GitTracker {
         let currentCommit = null;
         // Regex to identify the start of a commit block (Hash|Timestamp|Message)
         // Assumes Git hash is 40 hex characters
-        const commitHeaderRegex = /^([0-9a-f]{40})\|(.+)\|(.+)$/;
+        // Use [^|]+ to match everything that's not a pipe
+        const commitHeaderRegex = /^([0-9a-f]{40})\|([^|]+)\|(.+)$/;
         for (const line of lines) {
             const trimmedLine = line.trim();
             // Skip empty lines (Git often puts a newline between commits)
