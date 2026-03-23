@@ -8,6 +8,7 @@ export const window = {
     createOutputChannel: jest.fn(),
     withProgress: jest.fn(),
     activeTextEditor: null,
+    onDidChangeActiveTextEditor: jest.fn(),
 };
 
 export const workspace = {

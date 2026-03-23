@@ -10,14 +10,16 @@ jest.mock('../../utils/ConfigManager');
 describe('ActivityTracker', () => {
     let tracker: ActivityTracker;
     let mockContext: vscode.ExtensionContext;
-    let mockOnDidChangeActiveTextEditor: jest.Mock;
-    let mockOnDidChangeTextDocument: jest.Mock;
 
     beforeEach(() => {
         // Mock VS Code extension context
         mockContext = {
             globalState: {
-                get: jest.fn().mockReturnValue(false),
+                get: jest.fn((key: string, defaultValue?: any) => {
+                    if (key === 'standup.paused') return false;
+                    if (key === 'activityTrackerData') return undefined;
+                    return defaultValue;
+                }),
                 update: jest.fn(),
                 keys: []
             },
@@ -40,16 +42,12 @@ describe('ActivityTracker', () => {
         } as any;
 
         // Mock default behaviors
-        (mockContext.globalState.get as jest.Mock).mockReturnValue(false);
         (isIgnored as jest.Mock).mockReturnValue(false);
         (ConfigManager.get as jest.Mock).mockReturnValue(['**/node_modules/**', '**/.git/**']);
 
-        // Mock VS Code window methods
-        mockOnDidChangeActiveTextEditor = jest.fn().mockReturnValue({ dispose: jest.fn() });
-        mockOnDidChangeTextDocument = jest.fn().mockReturnValue({ dispose: jest.fn() });
-
-        (vscode.window.onDidChangeActiveTextEditor as any) = mockOnDidChangeActiveTextEditor;
-        (vscode.workspace.onDidChangeTextDocument as any) = mockOnDidChangeTextDocument;
+        // Reset VS Code mocks
+        (vscode.window.onDidChangeActiveTextEditor as jest.Mock).mockClear();
+        (vscode.workspace.onDidChangeTextDocument as jest.Mock).mockClear();
 
         // Use fake timers to avoid actual setInterval
         jest.useFakeTimers();
@@ -99,7 +97,7 @@ describe('ActivityTracker', () => {
             } as any;
 
             // Get the callback that was registered during construction
-            const callback = mockOnDidChangeActiveTextEditor.mock.calls[0][0];
+            const callback = (vscode.window.onDidChangeActiveTextEditor as jest.Mock).mock.calls[0][0];
             callback(mockEditor);
 
             expect(tracker.getFileCount()).toBe(1);
@@ -123,7 +121,7 @@ describe('ActivityTracker', () => {
             } as any;
 
             // Trigger the callback
-            const callback = mockOnDidChangeTextDocument.mock.calls[0][0];
+            const callback = (vscode.workspace.onDidChangeTextDocument as jest.Mock).mock.calls[0][0];
             callback(mockChangeEvent);
 
             expect(tracker.getFileCount()).toBe(1);
@@ -137,7 +135,7 @@ describe('ActivityTracker', () => {
                 }
             } as any;
 
-            const callback = mockOnDidChangeActiveTextEditor.mock.calls[0][0];
+            const callback = (vscode.window.onDidChangeActiveTextEditor as jest.Mock).mock.calls[0][0];
             callback(mockEditor);
 
             expect(tracker.getFileCount()).toBe(0);
@@ -153,7 +151,7 @@ describe('ActivityTracker', () => {
                 }
             } as any;
 
-            const callback = mockOnDidChangeActiveTextEditor.mock.calls[0][0];
+            const callback = (vscode.window.onDidChangeActiveTextEditor as jest.Mock).mock.calls[0][0];
             callback(mockEditor);
 
             expect(tracker.getFileCount()).toBe(0);
@@ -169,7 +167,7 @@ describe('ActivityTracker', () => {
                 }
             } as any;
 
-            const callback = mockOnDidChangeActiveTextEditor.mock.calls[0][0];
+            const callback = (vscode.window.onDidChangeActiveTextEditor as jest.Mock).mock.calls[0][0];
             callback(mockEditor);
 
             expect(tracker.getFileCount()).toBe(0);
@@ -189,7 +187,7 @@ describe('ActivityTracker', () => {
             (vscode.window.activeTextEditor as any) = mockEditor;
 
             // Trigger file switch
-            const callback = mockOnDidChangeActiveTextEditor.mock.calls[0][0];
+            const callback = (vscode.window.onDidChangeActiveTextEditor as jest.Mock).mock.calls[0][0];
             callback(mockEditor);
 
             // Advance timer by 5 seconds
@@ -211,7 +209,7 @@ describe('ActivityTracker', () => {
 
             (vscode.window.activeTextEditor as any) = mockEditor;
 
-            const callback = mockOnDidChangeActiveTextEditor.mock.calls[0][0];
+            const callback = (vscode.window.onDidChangeActiveTextEditor as jest.Mock).mock.calls[0][0];
             callback(mockEditor);
 
             // Clear active editor
@@ -244,7 +242,7 @@ describe('ActivityTracker', () => {
                 ]
             } as any;
 
-            const callback = mockOnDidChangeTextDocument.mock.calls[0][0];
+            const callback = (vscode.workspace.onDidChangeTextDocument as jest.Mock).mock.calls[0][0];
             callback(mockChangeEvent);
 
             const topFiles = tracker.getTopFiles(5);
@@ -268,7 +266,7 @@ describe('ActivityTracker', () => {
                 ]
             } as any;
 
-            const callback = mockOnDidChangeTextDocument.mock.calls[0][0];
+            const callback = (vscode.workspace.onDidChangeTextDocument as jest.Mock).mock.calls[0][0];
             callback(mockChangeEvent);
 
             const topFiles = tracker.getTopFiles(5);
@@ -299,7 +297,7 @@ describe('ActivityTracker', () => {
                 ]
             } as any;
 
-            const callback = mockOnDidChangeTextDocument.mock.calls[0][0];
+            const callback = (vscode.workspace.onDidChangeTextDocument as jest.Mock).mock.calls[0][0];
             callback(mockChangeEvent);
 
             const topFiles = tracker.getTopFiles(5);
@@ -317,7 +315,7 @@ describe('ActivityTracker', () => {
                 }
             } as any);
 
-            const callback = mockOnDidChangeActiveTextEditor.mock.calls[0][0];
+            const callback = (vscode.window.onDidChangeActiveTextEditor as jest.Mock).mock.calls[0][0];
 
             // Add multiple files
             callback(mockEditor('/test/file1.ts'));
@@ -358,7 +356,7 @@ describe('ActivityTracker', () => {
                 ]
             } as any;
 
-            const callback = mockOnDidChangeTextDocument.mock.calls[0][0];
+            const callback = (vscode.workspace.onDidChangeTextDocument as jest.Mock).mock.calls[0][0];
             callback(mockChangeEvent);
 
             const topFiles = tracker.getTopFiles(5);
@@ -377,7 +375,7 @@ describe('ActivityTracker', () => {
                 }
             } as any;
 
-            const callback = mockOnDidChangeActiveTextEditor.mock.calls[0][0];
+            const callback = (vscode.window.onDidChangeActiveTextEditor as jest.Mock).mock.calls[0][0];
             callback(mockEditor);
 
             expect(tracker.getFileCount()).toBeGreaterThan(0);
