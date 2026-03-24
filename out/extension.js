@@ -48,6 +48,7 @@ const DigestService_1 = require("./services/DigestService");
 const ConfigManager_1 = require("./utils/ConfigManager");
 const HistoryPanel_1 = require("./webviews/HistoryPanel");
 const DataAuditPanel_1 = require("./webviews/DataAuditPanel");
+const AnalyticsPanel_1 = require("./webviews/AnalyticsPanel");
 function activate(context) {
     console.log('Standup Autobot is now active!');
     // --- 1. Dependencies ---
@@ -86,6 +87,10 @@ function activate(context) {
     // View History
     const historyDisposable = vscode.commands.registerCommand('standup.viewHistory', () => {
         HistoryPanel_1.HistoryPanel.createOrShow(context.extensionUri, context);
+    });
+    // View Analytics Dashboard
+    const analyticsDisposable = vscode.commands.registerCommand('standup.viewAnalytics', () => {
+        AnalyticsPanel_1.AnalyticsPanel.createOrShow(context.extensionUri, context);
     });
     // Toggle Tracking
     const toggleTrackingDisposable = vscode.commands.registerCommand('standup.toggleTracking', async () => {

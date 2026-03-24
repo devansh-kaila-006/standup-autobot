@@ -37,6 +37,9 @@ exports.ActivityTracker = void 0;
 const vscode = __importStar(require("vscode"));
 const ignore_1 = require("../utils/ignore");
 const ConfigManager_1 = require("../utils/ConfigManager");
+const debounce_1 = require("../utils/debounce");
+const performanceMonitor_1 = require("../utils/performanceMonitor");
+const rateLimiter_1 = require("../utils/rateLimiter");
 class ActivityTracker {
     constructor(context) {
         this.context = context;
@@ -44,20 +47,30 @@ class ActivityTracker {
         this.ACTIVE_THRESHOLD = 60 * 1000;
         // Store data in memory: Key = File URI string, Value = Stats
         this.stats = new Map();
+        this.pendingSaves = new Set();
+        // Performance optimization: Rate limiter for file system events
+        this.activityRateLimiter = (0, rateLimiter_1.createRateLimiter)({
+            maxCalls: 100, // Maximum 100 activity updates
+            timeframe: 10000, // Within 10 seconds
+            queue: false, // Don't queue, just drop excess calls
+        });
         // Load previously saved data
         this.loadState();
-        // 1. Track file switches
-        const activeTextEditorSubscription = vscode.window.onDidChangeActiveTextEditor((editor) => {
+        // Create debounced saveState (save after 1 second of inactivity)
+        const debouncedFn = (0, debounce_1.debounce)(this.saveStateImmediate.bind(this), 1000);
+        this.debouncedSaveState = () => debouncedFn.execute();
+        // 1. Track file switches (with rate limiting)
+        const activeTextEditorSubscription = vscode.window.onDidChangeActiveTextEditor(async (editor) => {
             if (editor && editor.document.uri.scheme === 'file') {
-                this.updateFileActivity(editor.document.uri.fsPath, 0);
+                await this.activityRateLimiter.execute(() => this.updateFileActivity(editor.document.uri.fsPath, 0));
             }
         });
-        // 2. Track text modifications
-        const textDocumentChangeSubscription = vscode.workspace.onDidChangeTextDocument((e) => {
+        // 2. Track text modifications (rate-limited and debounced to reduce overhead)
+        const textDocumentChangeSubscription = vscode.workspace.onDidChangeTextDocument(async (e) => {
             if (e.document.uri.scheme === 'file') {
                 // Calculate lines changed in this specific edit
                 const linesDelta = this.calculateLinesChanged(e);
-                this.updateFileActivity(e.document.uri.fsPath, linesDelta);
+                await this.activityRateLimiter.execute(() => this.updateFileActivity(e.document.uri.fsPath, linesDelta));
             }
         });
         // 3. Start the heartbeat timer to accumulate time
@@ -69,57 +82,77 @@ class ActivityTracker {
      * Updates the last active timestamp and increments line counters.
      */
     updateFileActivity(filePath, linesAdded) {
-        // 1. Check if tracking is paused
-        if (this.context.globalState.get('standup.paused', false)) {
-            return;
+        const stop = performanceMonitor_1.globalPerformanceMonitor.start('activityTracker.updateFileActivity');
+        try {
+            // 1. Check if tracking is paused
+            if (this.context.globalState.get('standup.paused', false)) {
+                return;
+            }
+            // 2. Check if file is ignored
+            const ignorePatterns = ConfigManager_1.ConfigManager.get('ignorePatterns');
+            if ((0, ignore_1.isIgnored)(filePath, ignorePatterns)) {
+                return;
+            }
+            const currentStats = this.stats.get(filePath) || {
+                timeSeconds: 0,
+                linesChanged: 0,
+                lastActiveTimestamp: 0,
+            };
+            // Update stats
+            currentStats.linesChanged += linesAdded;
+            currentStats.lastActiveTimestamp = Date.now();
+            this.stats.set(filePath, currentStats);
+            // Mark this file as pending save
+            this.pendingSaves.add(filePath);
+            // Debounce save to reduce VS Code state operations
+            this.debouncedSaveState();
         }
-        // 2. Check if file is ignored
-        const ignorePatterns = ConfigManager_1.ConfigManager.get('ignorePatterns');
-        if ((0, ignore_1.isIgnored)(filePath, ignorePatterns)) {
-            return;
+        finally {
+            stop();
         }
-        const currentStats = this.stats.get(filePath) || {
-            timeSeconds: 0,
-            linesChanged: 0,
-            lastActiveTimestamp: 0,
-        };
-        // Update stats
-        currentStats.linesChanged += linesAdded;
-        currentStats.lastActiveTimestamp = Date.now();
-        this.stats.set(filePath, currentStats);
-        // Persist immediately on significant events to avoid data loss on crash
-        this.saveState();
     }
     /**
      * Calculates rough lines changed based on content changes.
      */
     calculateLinesChanged(event) {
-        let lines = 0;
-        for (const change of event.contentChanges) {
-            // Calculate the line span of the change. 
-            const changeLines = change.range.end.line - change.range.start.line + 1;
-            lines += Math.max(1, changeLines);
+        const stop = performanceMonitor_1.globalPerformanceMonitor.start('activityTracker.calculateLinesChanged');
+        try {
+            let lines = 0;
+            for (const change of event.contentChanges) {
+                // Calculate the line span of the change.
+                const changeLines = change.range.end.line - change.range.start.line + 1;
+                lines += Math.max(1, changeLines);
+            }
+            return lines;
         }
-        return lines;
+        finally {
+            stop();
+        }
     }
     /**
      * Runs every second to check if the currently active file should accumulate time.
      */
     startTimer() {
         this.intervalTimer = setInterval(() => {
-            const activeEditor = vscode.window.activeTextEditor;
-            if (!activeEditor || activeEditor.document.uri.scheme !== 'file') {
-                return;
-            }
-            const filePath = activeEditor.document.uri.fsPath;
-            const fileStats = this.stats.get(filePath);
-            if (fileStats) {
-                const now = Date.now();
-                const timeSinceLastActive = now - fileStats.lastActiveTimestamp;
-                // If the file was modified or switched to within the threshold, count this second.
-                if (timeSinceLastActive < this.ACTIVE_THRESHOLD) {
-                    fileStats.timeSeconds++;
+            const stop = performanceMonitor_1.globalPerformanceMonitor.start('activityTracker.timerTick');
+            try {
+                const activeEditor = vscode.window.activeTextEditor;
+                if (!activeEditor || activeEditor.document.uri.scheme !== 'file') {
+                    return;
                 }
+                const filePath = activeEditor.document.uri.fsPath;
+                const fileStats = this.stats.get(filePath);
+                if (fileStats) {
+                    const now = Date.now();
+                    const timeSinceLastActive = now - fileStats.lastActiveTimestamp;
+                    // If the file modified or switched to within the threshold, count this second.
+                    if (timeSinceLastActive < this.ACTIVE_THRESHOLD) {
+                        fileStats.timeSeconds++;
+                    }
+                }
+            }
+            finally {
+                stop();
             }
         }, 1000);
     }
@@ -152,11 +185,19 @@ class ActivityTracker {
         return this.stats.size;
     }
     /**
-     * Save current stats to VS Code global state.
+     * Save current stats to VS Code global state (immediate).
      */
-    saveState() {
+    saveStateImmediate() {
         const plainObj = Object.fromEntries(this.stats.entries());
         this.context.globalState.update('activityTrackerData', plainObj);
+        this.pendingSaves.clear();
+    }
+    /**
+     * Save current stats to VS Code global state (debounced).
+     */
+    saveState() {
+        // Use debounced version to reduce write operations
+        this.debouncedSaveState();
     }
     /**
      * Load stats from VS Code global state.
@@ -172,11 +213,46 @@ class ActivityTracker {
         this.saveState();
     }
     dispose() {
+        // Cancel any pending debounced saves
+        if (this.debouncedSaveState && typeof this.debouncedSaveState.cancel === 'function') {
+            this.debouncedSaveState.cancel();
+        }
+        if (this.saveTimer) {
+            clearTimeout(this.saveTimer);
+        }
         if (this.intervalTimer) {
             clearInterval(this.intervalTimer);
         }
         this.disposable.dispose();
-        this.saveState(); // Final save on dispose
+        // Final save on dispose (immediate)
+        this.saveStateImmediate();
+    }
+    /**
+     * Get performance statistics for the activity tracker
+     */
+    getPerformanceStats() {
+        const activityOperations = performanceMonitor_1.globalPerformanceMonitor.getStats('activityTracker.updateFileActivity');
+        const calculateLinesOps = performanceMonitor_1.globalPerformanceMonitor.getStats('activityTracker.calculateLinesChanged');
+        const timerTickOps = performanceMonitor_1.globalPerformanceMonitor.getStats('activityTracker.timerTick');
+        const recommendations = [];
+        // Check performance and generate recommendations
+        if (activityOperations && activityOperations.averageDuration > 10) {
+            recommendations.push('File activity updates are averaging >10ms. Consider reducing file system checks.');
+        }
+        if (this.stats.size > 1000) {
+            recommendations.push('Large number of tracked files (>1000). Consider implementing automatic cleanup.');
+        }
+        if (this.pendingSaves.size > 50) {
+            recommendations.push('Many pending saves (>50). Save operations may be bottlenecked.');
+        }
+        return {
+            activityOperations: activityOperations?.averageDuration || 0,
+            rateLimiterStats: {
+                availableCalls: 100, // Rate limiter configured for 100 calls per 10 seconds
+                queueLength: 0, // Queue is disabled
+            },
+            recommendations,
+        };
     }
 }
 exports.ActivityTracker = ActivityTracker;

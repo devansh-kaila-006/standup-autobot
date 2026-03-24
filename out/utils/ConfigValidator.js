@@ -65,11 +65,30 @@ exports.StandupConfigSchema = zod_1.z.object({
     enableTracking: zod_1.z.boolean().default(true),
     trackingInterval: zod_1.z.number().int().min(1000).max(60000).default(5000), // 1s to 60s
     maxHistorySize: zod_1.z.number().int().min(10).max(10000).default(1000),
+    // Phase 2.2: Memory management settings
     dataRetentionDays: zod_1.z.number().int().min(1).max(365).default(30),
+    autoCleanupEnabled: zod_1.z.boolean().default(false),
+    cleanupIntervalDays: zod_1.z.number().int().min(1).max(90).default(7),
+    maxCacheSize: zod_1.z.number().int().min(10).max(1000).default(100),
+    memoryProfilingEnabled: zod_1.z.boolean().default(true),
     // Feature flags
     enableSmartAlerts: zod_1.z.boolean().default(true),
     enableWeeklyDigest: zod_1.z.boolean().default(true),
     enableAutoTagging: zod_1.z.boolean().default(true),
+    // Phase 2: Terminal tracking settings
+    terminalTracking: zod_1.z.object({
+        enabled: zod_1.z.boolean().default(true),
+        shells: zod_1.z.array(zod_1.z.enum(['bash', 'zsh', 'powershell', 'cmd', 'fish'])).default(['bash', 'zsh', 'powershell']),
+        historyLimit: zod_1.z.number().int().min(1).max(100).default(20),
+        enableRealtimeTracking: zod_1.z.boolean().default(false),
+        respectHignore: zod_1.z.boolean().default(true),
+    }).optional().default({
+        enabled: true,
+        shells: ['bash', 'zsh', 'powershell'],
+        historyLimit: 20,
+        enableRealtimeTracking: false,
+        respectHignore: true,
+    }),
 });
 /**
  * Schema for workspace-level override configuration (.standup.json)

@@ -2,6 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.StandupGenerator = void 0;
 const ActivityAnalyzer_1 = require("../utils/ActivityAnalyzer");
+const apiCache_1 = require("../utils/apiCache");
+const performanceMonitor_1 = require("../utils/performanceMonitor");
 /**
  * Service class to generate daily standups using Gemini AI
  */
@@ -30,9 +32,22 @@ class StandupGenerator {
     }
     /**
      * Call Gemini API to generate content from prompt
+     * Uses caching to avoid redundant API calls for identical prompts
      */
     async generateContent(prompt, apiKey) {
+        const stop = performanceMonitor_1.globalPerformanceMonitor.start('standupGenerator.generateContent');
         try {
+            // Create a simple hash of the prompt for caching
+            const promptHash = (0, apiCache_1.hashActivityData)({ prompt });
+            const cacheKey = `gemini:${promptHash}`;
+            // Try to get from cache first
+            const cachedResponse = apiCache_1.geminiAPICache.get(cacheKey);
+            if (cachedResponse) {
+                stop();
+                console.log('Using cached Gemini API response');
+                return cachedResponse;
+            }
+            // Make the API call
             const response = await fetch(this.baseUrl, {
                 method: 'POST',
                 headers: {
@@ -63,13 +78,18 @@ class StandupGenerator {
             const json = await response.json();
             // Gemini returns text in candidates[0].content.parts[0].text
             if (json.candidates && json.candidates[0]?.content?.parts?.[0]?.text) {
-                return json.candidates[0].content.parts[0].text;
+                const result = json.candidates[0].content.parts[0].text;
+                // Cache the result for 5 minutes (300000 ms)
+                apiCache_1.geminiAPICache.set(cacheKey, result, 300000);
+                stop();
+                return result;
             }
             else {
                 throw new Error('Invalid response format from Gemini API');
             }
         }
         catch (error) {
+            stop();
             console.error('Failed to generate content:', error);
             throw new Error(`Failed to connect to Gemini API: ${error.message}`);
         }

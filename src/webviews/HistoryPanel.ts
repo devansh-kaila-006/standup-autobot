@@ -5,6 +5,16 @@ export class HistoryPanel {
     public static currentPanel: HistoryPanel | undefined;
     private readonly _panel: vscode.WebviewPanel;
     private _disposables: vscode.Disposable[] = [];
+    private _extensionUri: vscode.Uri;
+    private _context: vscode.ExtensionContext;
+
+    // Lazy loading state
+    private readonly PAGE_SIZE = 20;
+    private _currentHistoryPage = 0;
+    private _currentActivityPage = 0;
+    private _loadedHistory: any[] = [];
+    private _loadedActivity: any[] = [];
+    private _isLoading = false;
 
     public static createOrShow(extensionUri: vscode.Uri, context: vscode.ExtensionContext) {
         const column = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined;
@@ -29,7 +39,11 @@ export class HistoryPanel {
 
     private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, context: vscode.ExtensionContext) {
         this._panel = panel;
-        this._update(extensionUri, context);
+        this._extensionUri = extensionUri;
+        this._context = context;
+
+        // Load initial page only
+        this._updateInitial();
 
         this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
 
@@ -42,6 +56,15 @@ export class HistoryPanel {
                             vscode.window.showInformationMessage('Copied to clipboard!');
                         }
                         return;
+                    case 'loadMoreHistory':
+                        await this._loadMoreHistory();
+                        return;
+                    case 'loadMoreActivity':
+                        await this._loadMoreActivity();
+                        return;
+                    case 'clearCache':
+                        this._clearCache();
+                        return;
                 }
             },
             null,
@@ -49,15 +72,111 @@ export class HistoryPanel {
         );
     }
 
-    private _update(extensionUri: vscode.Uri, context: vscode.ExtensionContext) {
-        const historyService = new HistoryService(context);
-        const history = historyService.getHistory();
-        const activity = historyService.getAllActivity(); // In Reality we filter for last 7 days in React
+    /**
+     * Initialize with first page of data only (lazy loading)
+     */
+    private _updateInitial() {
+        this._currentHistoryPage = 0;
+        this._currentActivityPage = 0;
+        this._loadedHistory = [];
+        this._loadedActivity = [];
 
-        this._panel.webview.html = this._getHtmlForWebview(this._panel.webview, history, activity);
+        // Load first page
+        this._loadMoreHistory();
+        this._loadMoreActivity();
     }
 
-    private _getHtmlForWebview(webview: vscode.Webview, history: any[], activity: any[]) {
+    /**
+     * Load more history data (pagination)
+     */
+    private async _loadMoreHistory() {
+        if (this._isLoading) {
+            return;
+        }
+
+        this._isLoading = true;
+
+        try {
+            const historyService = new HistoryService(this._context);
+            const allHistory = historyService.getHistory();
+
+            const startIndex = this._currentHistoryPage * this.PAGE_SIZE;
+            const endIndex = startIndex + this.PAGE_SIZE;
+            const newItems = allHistory.slice(startIndex, endIndex);
+
+            this._loadedHistory = [...this._loadedHistory, ...newItems];
+            this._currentHistoryPage++;
+
+            const hasMore = endIndex < allHistory.length;
+
+            this._panel.webview.html = this._getHtmlForWebview(
+                this._panel.webview,
+                this._loadedHistory,
+                this._loadedActivity,
+                hasMore,
+                false // TODO: Add activity hasMore
+            );
+        } finally {
+            this._isLoading = false;
+        }
+    }
+
+    /**
+     * Load more activity data (pagination)
+     */
+    private async _loadMoreActivity() {
+        if (this._isLoading) {
+            return;
+        }
+
+        this._isLoading = true;
+
+        try {
+            const historyService = new HistoryService(this._context);
+            const allActivity = historyService.getAllActivity();
+
+            const startIndex = this._currentActivityPage * this.PAGE_SIZE;
+            const endIndex = startIndex + this.PAGE_SIZE;
+            const newItems = allActivity.slice(startIndex, endIndex);
+
+            this._loadedActivity = [...this._loadedActivity, ...newItems];
+            this._currentActivityPage++;
+
+            const hasMore = endIndex < allActivity.length;
+
+            this._panel.webview.html = this._getHtmlForWebview(
+                this._panel.webview,
+                this._loadedHistory,
+                this._loadedActivity,
+                false, // TODO: Add history hasMore
+                hasMore
+            );
+        } finally {
+            this._isLoading = false;
+        }
+    }
+
+    /**
+     * Clear cached data and reload
+     */
+    private _clearCache() {
+        this._updateInitial();
+    }
+
+    /**
+     * @deprecated Use _updateInitial for lazy loading
+     */
+    private _update(extensionUri: vscode.Uri, context: vscode.ExtensionContext) {
+        this._updateInitial();
+    }
+
+    private _getHtmlForWebview(
+        webview: vscode.Webview,
+        history: any[],
+        activity: any[],
+        hasMoreHistory: boolean = false,
+        hasMoreActivity: boolean = false
+    ) {
         const nonce = getNonce();
 
         return `
@@ -71,6 +190,10 @@ export class HistoryPanel {
                 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
                 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
                 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+                <script>
+                    // Initialize vscode API for message passing
+                    const vscode = acquireVsCodeApi();
+                </script>
                 <style>
                     :root {
                         --bg: #1e1e1e;
@@ -181,6 +304,23 @@ export class HistoryPanel {
                                             <div className="content">{item.text}</div>
                                         </div>
                                     ))}
+                                    ${hasMoreHistory ? `
+                                    <div style={{textAlign: 'center', marginTop: '20px'}}>
+                                        <button
+                                            onClick={() => vscode.postMessage({command: 'loadMoreHistory'})}
+                                            style={{
+                                                padding: '10px 20px',
+                                                background: '#007acc',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: '4px',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            Load More History
+                                        </button>
+                                    </div>
+                                    ` : ''}
                                 </div>
                             </div>
                         );

@@ -10,8 +10,8 @@ import {
 
 describe('Debounce Utility', () => {
     describe('debounce function', () => {
-        let fn: jest.Mock;
-        let debounced: DebouncedFunction<typeof fn>;
+        let fn: jest.Mock<(value: number) => number>;
+        let debounced: DebouncedFunction<(value: number) => number>;
 
         beforeEach(() => {
             jest.useFakeTimers();
@@ -116,8 +116,8 @@ describe('Debounce Utility', () => {
     });
 
     describe('throttle function', () => {
-        let fn: jest.Mock;
-        let throttled: ThrottledFunction<any>;
+        let fn: jest.Mock<(value: number) => number>;
+        let throttled: ThrottledFunction<(value: number) => number>;
 
         beforeEach(() => {
             jest.useFakeTimers();

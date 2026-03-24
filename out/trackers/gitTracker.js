@@ -37,19 +37,54 @@ exports.GitTracker = void 0;
 const vscode = __importStar(require("vscode"));
 const child_process_1 = require("child_process");
 const util_1 = require("util");
+const debounce_1 = require("../utils/debounce");
+const rateLimiter_1 = require("../utils/rateLimiter");
+const performanceMonitor_1 = require("../utils/performanceMonitor");
 // Promisify exec for async/await usage
 const execAsync = (0, util_1.promisify)(child_process_1.exec);
 /**
  * GitTracker handles the retrieval of Git history for the current workspace.
  */
 class GitTracker {
+    constructor() {
+        this.cache = new Map();
+        this.CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+        this.rateLimiter = (0, rateLimiter_1.createRateLimiter)({
+            maxCalls: 10, // Maximum 10 git calls
+            timeframe: 60000, // Within 60 seconds
+            queue: false, // Don't queue, just drop excess calls
+        });
+        // Create debounced version with 1 second delay
+        const debouncedFn = (0, debounce_1.debounce)(this.getRecentCommitsInternal.bind(this), 1000, { maxWait: 5000 } // Max wait 5 seconds
+        );
+        this.debouncedGetRecentCommits = (hours) => Promise.resolve(debouncedFn.execute(hours));
+    }
     /**
      * Retrieves commits made by the current git user in the last specified hours.
+     * This method is debounced and rate-limited for performance.
      *
      * @param hours The number of hours to look back (default 24).
      * @returns Promise<Array<GitCommit>> A list of commit objects.
      */
     async getRecentCommits(hours = 24) {
+        return this.debouncedGetRecentCommits(hours);
+    }
+    /**
+     * Internal implementation of getRecentCommits without debouncing.
+     */
+    async getRecentCommitsInternal(hours = 24) {
+        const stop = performanceMonitor_1.globalPerformanceMonitor.start('gitTracker.getRecentCommits');
+        try {
+            return await this.getRecentCommitsInternalImpl(hours);
+        }
+        finally {
+            stop();
+        }
+    }
+    /**
+     * Actual implementation of getRecentCommits.
+     */
+    async getRecentCommitsInternalImpl(hours = 24) {
         // 1. Ensure a workspace is open
         const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
         if (!workspaceFolder) {
@@ -62,22 +97,37 @@ class GitTracker {
             return [];
         }
         const repoPath = workspaceFolder.uri.fsPath;
+        const cacheKey = `${repoPath}-${hours}`;
+        // Check cache
+        const cached = this.cache.get(cacheKey);
+        if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
+            return cached.commits;
+        }
         try {
-            // 2. Get the current Git user name
-            const userName = await this.getGitUserName(repoPath);
-            if (!userName) {
-                return [];
-            }
-            // 3. Get raw Git log output
-            // Format: "Hash|ISO-Timestamp|Message" followed by filenames on subsequent lines
-            const formatString = '%H|%ai|%s';
-            const command = `git log --author="${this.escapeShell(userName)}" --since="${hours} hours ago" --pretty=format:"${formatString}" --name-only`;
-            const { stdout } = await execAsync(command, {
-                cwd: repoPath,
-                encoding: 'utf8'
+            // Use rate limiter for git operations
+            return await this.rateLimiter.execute(async () => {
+                // 2. Get the current Git user name
+                const userName = await this.getGitUserName(repoPath);
+                if (!userName) {
+                    return [];
+                }
+                // 3. Get raw Git log output
+                // Format: "Hash|ISO-Timestamp|Message" followed by filenames on subsequent lines
+                const formatString = '%H|%ai|%s';
+                const command = `git log --author="${this.escapeShell(userName)}" --since="${hours} hours ago" --pretty=format:"${formatString}" --name-only`;
+                const { stdout } = await execAsync(command, {
+                    cwd: repoPath,
+                    encoding: 'utf8'
+                });
+                // 4. Parse the output into structured JSON
+                const commits = this.parseGitLogOutput(stdout);
+                // Cache the result
+                this.cache.set(cacheKey, {
+                    commits,
+                    timestamp: Date.now(),
+                });
+                return commits;
             });
-            // 4. Parse the output into structured JSON
-            return this.parseGitLogOutput(stdout);
         }
         catch (error) {
             // 6. Error Handling
@@ -87,7 +137,7 @@ class GitTracker {
                 if (error.message.includes('not a git repository')) {
                     console.debug(`GitTracker: Folder "${repoPath}" is not a git repository.`);
                 }
-                else {
+                else if (!error.message.includes('Rate limit exceeded')) {
                     console.error(`GitTracker: Error executing git command. ${error.message}`);
                 }
             }
@@ -169,6 +219,33 @@ class GitTracker {
             commits.push(currentCommit);
         }
         return commits;
+    }
+    /**
+     * Clear the commit cache
+     */
+    clearCache() {
+        this.cache.clear();
+    }
+    /**
+     * Get cache size
+     */
+    getCacheSize() {
+        return this.cache.size;
+    }
+    /**
+     * Get performance statistics
+     */
+    getPerformanceStats() {
+        return performanceMonitor_1.globalPerformanceMonitor.getStats('gitTracker.getRecentCommits');
+    }
+    /**
+     * Dispose of resources
+     */
+    dispose() {
+        this.clearCache();
+        if (this.debouncedGetRecentCommits && typeof this.debouncedGetRecentCommits.cancel === 'function') {
+            this.debouncedGetRecentCommits.cancel();
+        }
     }
 }
 exports.GitTracker = GitTracker;

@@ -133,8 +133,8 @@ describe('HistoryService', () => {
         it('should generate unique IDs for entries', async () => {
             await service.saveStandup('First');
             await service.saveStandup('Second');
-            const firstId = mockHistory[0].id;
-            const secondId = mockHistory[0].id; // Most recent
+            const firstId = mockHistory[1].id; // First entry (oldest)
+            const secondId = mockHistory[0].id; // Second entry (most recent)
             expect(firstId).toBeDefined();
             expect(secondId).toBeDefined();
             expect(firstId).not.toBe(secondId);

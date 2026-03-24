@@ -11,6 +11,7 @@ import { DigestService } from './services/DigestService';
 import { ConfigManager } from './utils/ConfigManager';
 import { HistoryPanel } from './webviews/HistoryPanel';
 import { DataAuditPanel } from './webviews/DataAuditPanel';
+import { AnalyticsPanel } from './webviews/AnalyticsPanel';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Standup Autobot is now active!');
@@ -53,6 +54,11 @@ export function activate(context: vscode.ExtensionContext) {
     // View History
     const historyDisposable = vscode.commands.registerCommand('standup.viewHistory', () => {
         HistoryPanel.createOrShow(context.extensionUri, context);
+    });
+
+    // View Analytics Dashboard
+    const analyticsDisposable = vscode.commands.registerCommand('standup.viewAnalytics', () => {
+        AnalyticsPanel.createOrShow(context.extensionUri, context);
     });
 
     // Toggle Tracking

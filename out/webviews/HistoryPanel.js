@@ -51,8 +51,18 @@ class HistoryPanel {
     }
     constructor(panel, extensionUri, context) {
         this._disposables = [];
+        // Lazy loading state
+        this.PAGE_SIZE = 20;
+        this._currentHistoryPage = 0;
+        this._currentActivityPage = 0;
+        this._loadedHistory = [];
+        this._loadedActivity = [];
+        this._isLoading = false;
         this._panel = panel;
-        this._update(extensionUri, context);
+        this._extensionUri = extensionUri;
+        this._context = context;
+        // Load initial page only
+        this._updateInitial();
         this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
         this._panel.webview.onDidReceiveMessage(async (message) => {
             switch (message.command) {
@@ -62,16 +72,91 @@ class HistoryPanel {
                         vscode.window.showInformationMessage('Copied to clipboard!');
                     }
                     return;
+                case 'loadMoreHistory':
+                    await this._loadMoreHistory();
+                    return;
+                case 'loadMoreActivity':
+                    await this._loadMoreActivity();
+                    return;
+                case 'clearCache':
+                    this._clearCache();
+                    return;
             }
         }, null, this._disposables);
     }
-    _update(extensionUri, context) {
-        const historyService = new HistoryService_1.HistoryService(context);
-        const history = historyService.getHistory();
-        const activity = historyService.getAllActivity(); // In Reality we filter for last 7 days in React
-        this._panel.webview.html = this._getHtmlForWebview(this._panel.webview, history, activity);
+    /**
+     * Initialize with first page of data only (lazy loading)
+     */
+    _updateInitial() {
+        this._currentHistoryPage = 0;
+        this._currentActivityPage = 0;
+        this._loadedHistory = [];
+        this._loadedActivity = [];
+        // Load first page
+        this._loadMoreHistory();
+        this._loadMoreActivity();
     }
-    _getHtmlForWebview(webview, history, activity) {
+    /**
+     * Load more history data (pagination)
+     */
+    async _loadMoreHistory() {
+        if (this._isLoading) {
+            return;
+        }
+        this._isLoading = true;
+        try {
+            const historyService = new HistoryService_1.HistoryService(this._context);
+            const allHistory = historyService.getHistory();
+            const startIndex = this._currentHistoryPage * this.PAGE_SIZE;
+            const endIndex = startIndex + this.PAGE_SIZE;
+            const newItems = allHistory.slice(startIndex, endIndex);
+            this._loadedHistory = [...this._loadedHistory, ...newItems];
+            this._currentHistoryPage++;
+            const hasMore = endIndex < allHistory.length;
+            this._panel.webview.html = this._getHtmlForWebview(this._panel.webview, this._loadedHistory, this._loadedActivity, hasMore, false // TODO: Add activity hasMore
+            );
+        }
+        finally {
+            this._isLoading = false;
+        }
+    }
+    /**
+     * Load more activity data (pagination)
+     */
+    async _loadMoreActivity() {
+        if (this._isLoading) {
+            return;
+        }
+        this._isLoading = true;
+        try {
+            const historyService = new HistoryService_1.HistoryService(this._context);
+            const allActivity = historyService.getAllActivity();
+            const startIndex = this._currentActivityPage * this.PAGE_SIZE;
+            const endIndex = startIndex + this.PAGE_SIZE;
+            const newItems = allActivity.slice(startIndex, endIndex);
+            this._loadedActivity = [...this._loadedActivity, ...newItems];
+            this._currentActivityPage++;
+            const hasMore = endIndex < allActivity.length;
+            this._panel.webview.html = this._getHtmlForWebview(this._panel.webview, this._loadedHistory, this._loadedActivity, false, // TODO: Add history hasMore
+            hasMore);
+        }
+        finally {
+            this._isLoading = false;
+        }
+    }
+    /**
+     * Clear cached data and reload
+     */
+    _clearCache() {
+        this._updateInitial();
+    }
+    /**
+     * @deprecated Use _updateInitial for lazy loading
+     */
+    _update(extensionUri, context) {
+        this._updateInitial();
+    }
+    _getHtmlForWebview(webview, history, activity, hasMoreHistory = false, hasMoreActivity = false) {
         const nonce = getNonce();
         return `
             <!DOCTYPE html>
@@ -84,6 +169,10 @@ class HistoryPanel {
                 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
                 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
                 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+                <script>
+                    // Initialize vscode API for message passing
+                    const vscode = acquireVsCodeApi();
+                </script>
                 <style>
                     :root {
                         --bg: #1e1e1e;
@@ -194,6 +283,23 @@ class HistoryPanel {
                                             <div className="content">{item.text}</div>
                                         </div>
                                     ))}
+                                    ${hasMoreHistory ? `
+                                    <div style={{textAlign: 'center', marginTop: '20px'}}>
+                                        <button
+                                            onClick={() => vscode.postMessage({command: 'loadMoreHistory'})}
+                                            style={{
+                                                padding: '10px 20px',
+                                                background: '#007acc',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: '4px',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            Load More History
+                                        </button>
+                                    </div>
+                                    ` : ''}
                                 </div>
                             </div>
                         );

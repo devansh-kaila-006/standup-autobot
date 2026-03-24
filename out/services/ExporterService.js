@@ -106,10 +106,16 @@ class ExporterService {
     formatForTeams(markdown) {
         // Regex to match broad range of emojis
         const emojiRegex = /[\p{Extended_Pictographic}\u{1F300}-\u{1F5FF}\u{1F900}-\u{1F9FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu;
+        // Remove emojis first
         let cleanText = markdown.replace(emojiRegex, '');
-        // Ensure standard bold syntax is explicit
-        cleanText = cleanText.replace(/<(b|strong)>(.*?)<\/(b|strong)>/g, '**$2**');
-        return cleanText.trim();
+        // Convert HTML to markdown, trimming content inside tags
+        cleanText = cleanText.replace(/<(b|strong)>(.*?)<\/(b|strong)>/g, (match, tag, content) => {
+            const trimmedContent = content.trim();
+            return `**${trimmedContent}**`;
+        });
+        // Clean up extra whitespace
+        cleanText = cleanText.replace(/\s+/g, ' ').trim();
+        return cleanText;
     }
     /**
      * Generates a mailto link and opens it.

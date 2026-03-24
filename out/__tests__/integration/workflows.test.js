@@ -38,8 +38,8 @@ const activityTracker_1 = require("../../trackers/activityTracker");
 const gitTracker_1 = require("../../trackers/gitTracker");
 const HistoryService_1 = require("../../services/HistoryService");
 const vscode = __importStar(require("vscode"));
-// Mock VS Code API
-jest.mock('vscode');
+const vscode_1 = require("../../__mocks__/vscode");
+// Mock fetch for API calls
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
 describe('Integration Tests', () => {
@@ -53,7 +53,17 @@ describe('Integration Tests', () => {
             // Setup mock context
             mockContext = {
                 globalState: {
-                    get: jest.fn().mockReturnValue(false),
+                    get: jest.fn((key, defaultValue) => {
+                        if (key === 'standup.paused')
+                            return false;
+                        if (key === 'standup.history')
+                            return [];
+                        if (key === 'standup.activityDaily')
+                            return [];
+                        if (key === 'activityTrackerData')
+                            return undefined;
+                        return defaultValue;
+                    }),
                     update: jest.fn(),
                     keys: []
                 },
@@ -108,8 +118,25 @@ describe('Integration Tests', () => {
                     scheme: 'file'
                 }
             };
-            const onActiveEditorCallback = vscode.window.onDidChangeActiveTextEditor.mock.calls[0][0];
-            onActiveEditorCallback(mockEditor);
+            // Trigger the callback
+            vscode_1.callbacks.onDidChangeActiveTextEditor[0](mockEditor);
+            // Add a document change to ensure the file appears in results
+            const mockChangeEvent = {
+                document: {
+                    uri: vscode.Uri.file('/test/workspace/src/app.ts'),
+                    scheme: 'file'
+                },
+                contentChanges: [
+                    {
+                        range: {
+                            start: { line: 0, character: 0 },
+                            end: { line: 5, character: 0 }
+                        },
+                        text: 'new content'
+                    }
+                ]
+            };
+            vscode_1.callbacks.onDidChangeTextDocument[0](mockChangeEvent);
             // 2. Get activity data
             const topFiles = activityTracker.getTopFiles(5);
             // 3. Mock git commits (simplified for integration test)

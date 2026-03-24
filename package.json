@@ -89,6 +89,36 @@
           },
           "default": ["**/node_modules/**", "**/.git/**"],
           "description": "List of glob patterns to ignore during tracking"
+        },
+        "standup.enableTerminalTracking": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable terminal command tracking (tracks commands executed in integrated terminals)"
+        },
+        "standup.terminalTrackingMode": {
+          "type": "string",
+          "enum": ["integrated", "history", "both"],
+          "default": "integrated",
+          "description": "Terminal tracking mode: 'integrated' (VS Code terminals), 'history' (shell history files), or 'both'"
+        },
+        "standup.dataRetentionDays": {
+          "type": "integer",
+          "default": 30,
+          "minimum": 1,
+          "maximum": 365,
+          "description": "Number of days to retain activity data before automatic cleanup"
+        },
+        "standup.autoCleanupEnabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable automatic cleanup of old activity data"
+        },
+        "standup.cleanupIntervalDays": {
+          "type": "integer",
+          "default": 7,
+          "minimum": 1,
+          "maximum": 30,
+          "description": "Number of days between automatic cleanup runs"
         }
       }
     },
@@ -120,6 +150,10 @@
       {
         "command": "standup.viewHistory",
         "title": "Standup: View History"
+      },
+      {
+        "command": "standup.viewAnalytics",
+        "title": "Standup: View Analytics Dashboard"
       },
       {
         "command": "standup.toggleTracking",

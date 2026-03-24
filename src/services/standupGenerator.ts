@@ -43,6 +43,8 @@ export interface StandupSettings {
 }
 
 import { ActivityAnalyzer, ActivityAnalysis } from '../utils/ActivityAnalyzer';
+import { geminiAPICache, generateStandupCacheKey, hashActivityData } from '../utils/apiCache';
+import { globalPerformanceMonitor } from '../utils/performanceMonitor';
 
 /**
  * Service class to generate daily standups using Gemini AI
@@ -85,9 +87,25 @@ export class StandupGenerator {
 
   /**
    * Call Gemini API to generate content from prompt
+   * Uses caching to avoid redundant API calls for identical prompts
    */
   public async generateContent(prompt: string, apiKey: string): Promise<string> {
+    const stop = globalPerformanceMonitor.start('standupGenerator.generateContent');
+
     try {
+      // Create a simple hash of the prompt for caching
+      const promptHash = hashActivityData({ prompt });
+      const cacheKey = `gemini:${promptHash}`;
+
+      // Try to get from cache first
+      const cachedResponse = geminiAPICache.get(cacheKey);
+      if (cachedResponse) {
+        stop();
+        console.log('Using cached Gemini API response');
+        return cachedResponse;
+      }
+
+      // Make the API call
       const response = await fetch(this.baseUrl, {
         method: 'POST',
         headers: {
@@ -118,14 +136,21 @@ export class StandupGenerator {
       }
 
       const json: any = await response.json();
-      
+
       // Gemini returns text in candidates[0].content.parts[0].text
       if (json.candidates && json.candidates[0]?.content?.parts?.[0]?.text) {
-        return json.candidates[0].content.parts[0].text;
+        const result = json.candidates[0].content.parts[0].text;
+
+        // Cache the result for 5 minutes (300000 ms)
+        geminiAPICache.set(cacheKey, result, 300000);
+
+        stop();
+        return result;
       } else {
         throw new Error('Invalid response format from Gemini API');
       }
     } catch (error: any) {
+      stop();
       console.error('Failed to generate content:', error);
       throw new Error(`Failed to connect to Gemini API: ${error.message}`);
     }

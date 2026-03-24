@@ -9,6 +9,12 @@ class HistoryService {
         this.context = context;
     }
     /**
+     * Generates a unique ID for standup entries.
+     */
+    generateUniqueId() {
+        return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    }
+    /**
      * Saves a new standup entry and trims history to the last 30 days.
      */
     async saveStandup(text) {
@@ -16,7 +22,7 @@ class HistoryService {
         const now = new Date();
         const dateStr = now.toISOString().split('T')[0];
         const newEntry = {
-            id: Date.now().toString(),
+            id: this.generateUniqueId(),
             date: dateStr,
             timestamp: now.getTime(),
             text
@@ -45,11 +51,12 @@ class HistoryService {
             // Create new entry
             activities.push({ date: today, fileCount });
         }
-        // Keep only last 30 days of activity too
-        if (activities.length > 30) {
-            activities.shift();
-        }
-        await this.context.globalState.update(HistoryService.ACTIVITY_KEY, activities);
+        // Keep only last 30 days of activity (exclusive of the 30th day)
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const cutoffDate = thirtyDaysAgo.toISOString().split('T')[0];
+        const filteredActivities = activities.filter(a => a.date > cutoffDate);
+        await this.context.globalState.update(HistoryService.ACTIVITY_KEY, filteredActivities);
     }
     /**
      * Retrieves full history.

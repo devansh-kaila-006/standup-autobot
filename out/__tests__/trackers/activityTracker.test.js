@@ -37,19 +37,24 @@ const activityTracker_1 = require("../../trackers/activityTracker");
 const vscode = __importStar(require("vscode"));
 const ignore_1 = require("../../utils/ignore");
 const ConfigManager_1 = require("../../utils/ConfigManager");
+const vscode_1 = require("../../__mocks__/vscode");
 // Mock dependencies
 jest.mock('../../utils/ignore');
 jest.mock('../../utils/ConfigManager');
 describe('ActivityTracker', () => {
     let tracker;
     let mockContext;
-    let mockOnDidChangeActiveTextEditor;
-    let mockOnDidChangeTextDocument;
     beforeEach(() => {
         // Mock VS Code extension context
         mockContext = {
             globalState: {
-                get: jest.fn().mockReturnValue(false),
+                get: jest.fn((key, defaultValue) => {
+                    if (key === 'standup.paused')
+                        return false;
+                    if (key === 'activityTrackerData')
+                        return undefined;
+                    return defaultValue;
+                }),
                 update: jest.fn(),
                 keys: []
             },
@@ -71,17 +76,17 @@ describe('ActivityTracker', () => {
             secrets: {}
         };
         // Mock default behaviors
-        mockContext.globalState.get.mockReturnValue(false);
         ignore_1.isIgnored.mockReturnValue(false);
         ConfigManager_1.ConfigManager.get.mockReturnValue(['**/node_modules/**', '**/.git/**']);
-        // Mock VS Code window methods
-        mockOnDidChangeActiveTextEditor = jest.fn().mockReturnValue({ dispose: jest.fn() });
-        mockOnDidChangeTextDocument = jest.fn().mockReturnValue({ dispose: jest.fn() });
-        vscode.window.onDidChangeActiveTextEditor = mockOnDidChangeActiveTextEditor;
-        vscode.workspace.onDidChangeTextDocument = mockOnDidChangeTextDocument;
+        // Reset VS Code mocks
+        vscode.window.onDidChangeActiveTextEditor.mockClear();
+        vscode.workspace.onDidChangeTextDocument.mockClear();
         // Use fake timers to avoid actual setInterval
         jest.useFakeTimers();
         tracker = new activityTracker_1.ActivityTracker(mockContext);
+        // Clear the callbacks array and keep only the most recent ones (from this tracker)
+        vscode_1.callbacks.onDidChangeActiveTextEditor.splice(0, vscode_1.callbacks.onDidChangeActiveTextEditor.length - 1);
+        vscode_1.callbacks.onDidChangeTextDocument.splice(0, vscode_1.callbacks.onDidChangeTextDocument.length - 1);
     });
     afterEach(() => {
         jest.clearAllMocks();
@@ -118,8 +123,7 @@ describe('ActivityTracker', () => {
                 }
             };
             // Trigger the callback
-            const callback = mockOnDidChangeActiveTextEditor.mock.calls[0][0];
-            callback(mockEditor);
+            vscode_1.callbacks.onDidChangeActiveTextEditor[0](mockEditor);
             expect(tracker.getFileCount()).toBe(1);
         });
         it('should track text document changes', () => {
@@ -139,8 +143,7 @@ describe('ActivityTracker', () => {
                 ]
             };
             // Trigger the callback
-            const callback = mockOnDidChangeTextDocument.mock.calls[0][0];
-            callback(mockChangeEvent);
+            vscode_1.callbacks.onDidChangeTextDocument[0](mockChangeEvent);
             expect(tracker.getFileCount()).toBe(1);
         });
         it('should ignore non-file schemes', () => {
@@ -150,8 +153,7 @@ describe('ActivityTracker', () => {
                     scheme: 'untitled'
                 }
             };
-            const callback = mockOnDidChangeActiveTextEditor.mock.calls[0][0];
-            callback(mockEditor);
+            vscode_1.callbacks.onDidChangeActiveTextEditor[0](mockEditor);
             expect(tracker.getFileCount()).toBe(0);
         });
         it('should respect ignore patterns', () => {
@@ -162,8 +164,7 @@ describe('ActivityTracker', () => {
                     scheme: 'file'
                 }
             };
-            const callback = mockOnDidChangeActiveTextEditor.mock.calls[0][0];
-            callback(mockEditor);
+            vscode_1.callbacks.onDidChangeActiveTextEditor[0](mockEditor);
             expect(tracker.getFileCount()).toBe(0);
         });
         it('should pause tracking when paused', () => {
@@ -174,8 +175,7 @@ describe('ActivityTracker', () => {
                     scheme: 'file'
                 }
             };
-            const callback = mockOnDidChangeActiveTextEditor.mock.calls[0][0];
-            callback(mockEditor);
+            vscode_1.callbacks.onDidChangeActiveTextEditor[0](mockEditor);
             expect(tracker.getFileCount()).toBe(0);
         });
     });
@@ -190,14 +190,30 @@ describe('ActivityTracker', () => {
             // Mock active editor
             vscode.window.activeTextEditor = mockEditor;
             // Trigger file switch
-            const callback = mockOnDidChangeActiveTextEditor.mock.calls[0][0];
-            callback(mockEditor);
-            // Advance timer by 5 seconds
-            jest.advanceTimersByTime(5000);
+            vscode_1.callbacks.onDidChangeActiveTextEditor[0](mockEditor);
+            // Trigger a document change to activate the file
+            const mockChangeEvent = {
+                document: {
+                    uri: vscode.Uri.file('/test/path/file.ts'),
+                    scheme: 'file'
+                },
+                contentChanges: [
+                    {
+                        range: {
+                            start: { line: 0, character: 0 },
+                            end: { line: 0, character: 10 }
+                        },
+                        text: 'content'
+                    }
+                ]
+            };
+            vscode_1.callbacks.onDidChangeTextDocument[0](mockChangeEvent);
+            // Advance timer by 60 seconds (enough for 1 minute with fake timers)
+            jest.advanceTimersByTime(60000);
             // Get top files and check time
             const topFiles = tracker.getTopFiles(5);
             expect(topFiles.length).toBe(1);
-            expect(topFiles[0].timeSpent).toBe('5 mins'); // Rounded
+            expect(topFiles[0].timeSpent).toBe('1 mins'); // 60 seconds = 1 minute
         });
         it('should not accumulate time for inactive files', () => {
             const mockEditor = {
@@ -207,14 +223,31 @@ describe('ActivityTracker', () => {
                 }
             };
             vscode.window.activeTextEditor = mockEditor;
-            const callback = mockOnDidChangeActiveTextEditor.mock.calls[0][0];
-            callback(mockEditor);
+            vscode_1.callbacks.onDidChangeActiveTextEditor[0](mockEditor);
+            // Add a document change so the file appears in results
+            const mockChangeEvent = {
+                document: {
+                    uri: vscode.Uri.file('/test/path/file.ts'),
+                    scheme: 'file'
+                },
+                contentChanges: [
+                    {
+                        range: {
+                            start: { line: 0, character: 0 },
+                            end: { line: 0, character: 10 }
+                        },
+                        text: 'content'
+                    }
+                ]
+            };
+            vscode_1.callbacks.onDidChangeTextDocument[0](mockChangeEvent);
             // Clear active editor
             vscode.window.activeTextEditor = undefined;
             // Advance timer
             jest.advanceTimersByTime(10000);
             const topFiles = tracker.getTopFiles(5);
-            // Should have accumulated minimal time (0-1 seconds)
+            // Should have accumulated minimal time (0-1 seconds) but still appear due to lines changed
+            expect(topFiles.length).toBeGreaterThan(0);
             expect(topFiles[0].timeSpent).toBe('0 mins');
         });
     });
@@ -235,8 +268,7 @@ describe('ActivityTracker', () => {
                     }
                 ]
             };
-            const callback = mockOnDidChangeTextDocument.mock.calls[0][0];
-            callback(mockChangeEvent);
+            vscode_1.callbacks.onDidChangeTextDocument[0](mockChangeEvent);
             const topFiles = tracker.getTopFiles(5);
             expect(topFiles[0].linesChanged).toBe(1);
         });
@@ -256,8 +288,7 @@ describe('ActivityTracker', () => {
                     }
                 ]
             };
-            const callback = mockOnDidChangeTextDocument.mock.calls[0][0];
-            callback(mockChangeEvent);
+            vscode_1.callbacks.onDidChangeTextDocument[0](mockChangeEvent);
             const topFiles = tracker.getTopFiles(5);
             expect(topFiles[0].linesChanged).toBe(6); // 5 lines + 1
         });
@@ -284,8 +315,7 @@ describe('ActivityTracker', () => {
                     }
                 ]
             };
-            const callback = mockOnDidChangeTextDocument.mock.calls[0][0];
-            callback(mockChangeEvent);
+            vscode_1.callbacks.onDidChangeTextDocument[0](mockChangeEvent);
             const topFiles = tracker.getTopFiles(5);
             expect(topFiles[0].linesChanged).toBe(4); // 1 + 3
         });
@@ -299,11 +329,28 @@ describe('ActivityTracker', () => {
                     scheme: 'file'
                 }
             });
-            const callback = mockOnDidChangeActiveTextEditor.mock.calls[0][0];
-            // Add multiple files
-            callback(mockEditor('/test/file1.ts'));
-            callback(mockEditor('/test/file2.ts'));
-            callback(mockEditor('/test/file3.ts'));
+            const mockChangeEvent = (filePath, lines) => ({
+                document: {
+                    uri: vscode.Uri.file(filePath),
+                    scheme: 'file'
+                },
+                contentChanges: [
+                    {
+                        range: {
+                            start: { line: 0, character: 0 },
+                            end: { line: lines - 1, character: 0 }
+                        },
+                        text: 'x'.repeat(lines)
+                    }
+                ]
+            });
+            // Add multiple files with different line changes
+            vscode_1.callbacks.onDidChangeActiveTextEditor[0](mockEditor('/test/file1.ts'));
+            vscode_1.callbacks.onDidChangeTextDocument[0](mockChangeEvent('/test/file1.ts', 5));
+            vscode_1.callbacks.onDidChangeActiveTextEditor[0](mockEditor('/test/file2.ts'));
+            vscode_1.callbacks.onDidChangeTextDocument[0](mockChangeEvent('/test/file2.ts', 10));
+            vscode_1.callbacks.onDidChangeActiveTextEditor[0](mockEditor('/test/file3.ts'));
+            vscode_1.callbacks.onDidChangeTextDocument[0](mockChangeEvent('/test/file3.ts', 3));
         });
         it('should return files sorted by lines changed', () => {
             const topFiles = tracker.getTopFiles(5);
@@ -333,8 +380,7 @@ describe('ActivityTracker', () => {
                     }
                 ]
             };
-            const callback = mockOnDidChangeTextDocument.mock.calls[0][0];
-            callback(mockChangeEvent);
+            vscode_1.callbacks.onDidChangeTextDocument[0](mockChangeEvent);
             const topFiles = tracker.getTopFiles(5);
             const newFile = topFiles.find(f => f.file === '/test/newfile.ts');
             expect(newFile).toBeDefined();
@@ -348,8 +394,7 @@ describe('ActivityTracker', () => {
                     scheme: 'file'
                 }
             };
-            const callback = mockOnDidChangeActiveTextEditor.mock.calls[0][0];
-            callback(mockEditor);
+            vscode_1.callbacks.onDidChangeActiveTextEditor[0](mockEditor);
             expect(tracker.getFileCount()).toBeGreaterThan(0);
             tracker.reset();
             expect(tracker.getFileCount()).toBe(0);

@@ -1,0 +1,27 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Running pre-commit checks..."
+
+# Run linter
+echo "📝 Running ESLint..."
+npm run lint || {
+  echo "❌ ESLint failed. Please fix linting errors before committing."
+  exit 1
+}
+
+# Run tests
+echo "🧪 Running tests..."
+npm test -- --passWithNoTests || {
+  echo "❌ Tests failed. Please fix failing tests before committing."
+  exit 1
+}
+
+# Check for TypeScript compilation errors
+echo "🔷 Checking TypeScript compilation..."
+npm run compile || {
+  echo "❌ TypeScript compilation failed. Please fix compilation errors before committing."
+  exit 1
+}
+
+echo "✅ All pre-commit checks passed!"

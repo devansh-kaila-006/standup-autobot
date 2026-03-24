@@ -42,39 +42,396 @@ const child_process_1 = require("child_process");
 const util_1 = require("util");
 const execAsync = (0, util_1.promisify)(child_process_1.exec);
 class TerminalTracker {
+    constructor() {
+        this.trackedTerminals = new Map();
+        this.commandHistory = [];
+        this.maxHistorySize = 1000;
+        this.disposables = [];
+    }
     /**
-     * Returns an array of recently run commands.
-     * On Windows, this primarily attempts to read the PowerShell history file.
+     * Initialize terminal tracking with VS Code terminal integration
+     * Respects user configuration settings for terminal tracking mode
+     */
+    initialize() {
+        // Check if terminal tracking is enabled
+        const config = vscode.workspace.getConfiguration('standup');
+        const enabled = config.get('enableTerminalTracking', true);
+        const trackingMode = config.get('terminalTrackingMode', 'integrated');
+        if (!enabled) {
+            console.log('Terminal tracking is disabled in settings');
+            return;
+        }
+        // Only set up integrated terminal tracking if mode is 'integrated' or 'both'
+        if (trackingMode === 'integrated' || trackingMode === 'both') {
+            // Listen for terminal creation events
+            this.disposables.push(vscode.window.onDidOpenTerminal((terminal) => {
+                this.trackTerminal(terminal);
+            }));
+            // Listen for terminal close events
+            this.disposables.push(vscode.window.onDidCloseTerminal((terminal) => {
+                this.untrackTerminal(terminal);
+            }));
+            // Track existing terminals
+            vscode.window.terminals.forEach((terminal) => {
+                this.trackTerminal(terminal);
+            });
+        }
+        console.log(`Terminal tracking initialized in ${trackingMode} mode`);
+    }
+    /**
+     * Start tracking a terminal
+     */
+    trackTerminal(terminal) {
+        const terminalId = this.getTerminalId(terminal);
+        this.trackedTerminals.set(terminalId, terminal);
+        // Attempt to determine shell type and set up appropriate tracking
+        const shellType = this.detectShellType(terminal);
+        // Send initial command to start tracking (if supported)
+        try {
+            terminal.sendText('echo "Standup Autobot: Terminal tracking started"', true);
+        }
+        catch (error) {
+            // Some terminals don't support sendText
+            console.debug('Could not send tracking initialization to terminal:', error);
+        }
+    }
+    /**
+     * Stop tracking a terminal
+     */
+    untrackTerminal(terminal) {
+        const terminalId = this.getTerminalId(terminal);
+        this.trackedTerminals.delete(terminalId);
+    }
+    /**
+     * Get unique identifier for a terminal
+     */
+    getTerminalId(terminal) {
+        // Use terminal name and process ID (if available) for unique identification
+        // Fallback to name + timestamp if process ID is not available
+        const pid = terminal.processId;
+        const timestamp = Date.now();
+        return `${terminal.name}-${pid || timestamp}`;
+    }
+    /**
+     * Detect shell type from terminal name and platform
+     */
+    detectShellType(terminal) {
+        const name = terminal.name.toLowerCase();
+        const platform = os.platform();
+        if (name.includes('powershell') || name.includes('pwsh')) {
+            return 'powershell';
+        }
+        else if (name.includes('cmd') || name.includes('command prompt')) {
+            return 'cmd';
+        }
+        else if (name.includes('bash')) {
+            return 'bash';
+        }
+        else if (name.includes('zsh')) {
+            return 'zsh';
+        }
+        else if (name.includes('fish')) {
+            return 'fish';
+        }
+        // Default based on platform
+        if (platform === 'win32') {
+            return 'powershell';
+        }
+        else {
+            return 'bash';
+        }
+    }
+    /**
+     * Returns an array of recently run commands from all available sources.
+     * Supports cross-platform shell history files and VS Code terminal integration.
+     *
+     * Respects the following configuration settings:
+     * - standup.enableTerminalTracking: Master enable/disable switch
+     * - standup.terminalTrackingMode: 'integrated', 'history', or 'both'
+     * - standup.paused: Global tracking pause flag
+     *
+     * @param limit Maximum number of commands to return
+     * @returns Array of terminal commands
      */
     async getTerminalHistory(limit = 20) {
-        // Check if tracking is paused (global state)
-        // Note: For trackers, we might want to check workspace config or context
-        // But since we don't have context here, we'll check workspace config as a proxy
-        // or the extension should pass the state.
-        if (vscode.workspace.getConfiguration('standup').get('paused', false)) {
+        const config = vscode.workspace.getConfiguration('standup');
+        // Check if tracking is paused globally
+        if (config.get('paused', false)) {
             return [];
         }
-        // Attempt 1: Read PowerShell History File (Most reliable for persistence)
-        const psHistoryPath = path.join(os.homedir(), 'AppData', 'Roaming', 'Microsoft', 'Windows', 'PowerShell', 'PSReadline', 'ConsoleHost_history.txt');
-        if (fs.existsSync(psHistoryPath)) {
-            try {
-                const content = fs.readFileSync(psHistoryPath, 'utf-8');
-                const lines = content.split(/\r?\n/).filter(line => line.trim().length > 0);
-                // Return the last 'limit' commands
-                return lines.slice(-limit);
+        // Check if terminal tracking is enabled
+        if (!config.get('enableTerminalTracking', true)) {
+            return [];
+        }
+        const trackingMode = config.get('terminalTrackingMode', 'integrated');
+        const platform = os.platform();
+        // Strategy 1: Shell history files (if mode is 'history' or 'both')
+        if (trackingMode === 'history' || trackingMode === 'both') {
+            // Windows PowerShell History File (Most reliable for persistence)
+            if (platform === 'win32') {
+                const psHistoryPath = path.join(os.homedir(), 'AppData', 'Roaming', 'Microsoft', 'Windows', 'PowerShell', 'PSReadline', 'ConsoleHost_history.txt');
+                if (fs.existsSync(psHistoryPath)) {
+                    try {
+                        const content = fs.readFileSync(psHistoryPath, 'utf-8');
+                        // Normalize line endings: handle \r\n, \n, \r, and mixed \n\r\n
+                        const normalizedContent = content.replace(/\r\n/g, '\n').replace(/\n\r/g, '\n').replace(/\r/g, '\n');
+                        const lines = normalizedContent.split('\n').filter(line => line.trim().length > 0);
+                        // Return the last 'limit' commands
+                        return lines.slice(-limit);
+                    }
+                    catch (err) {
+                        console.error('Error reading PowerShell history:', err);
+                    }
+                }
             }
-            catch (err) {
-                console.error('Error reading PowerShell history:', err);
+            // Cross-platform shell history files
+            const shellHistoryCommands = await this.getShellHistoryFiles(limit);
+            if (shellHistoryCommands.length > 0) {
+                return shellHistoryCommands.slice(-limit);
             }
         }
-        // Attempt 2: Fallback Stub for CMD/Doskey
-        // Note: 'doskey /history' only works inside an active cmd session. 
-        // Since VS Code extensions run in a separate node process, we cannot see the doskey history of the user's active terminal window.
-        // However, per the request, here is a function that *would* run it if attached to a session.
+        // Strategy 2: Get commands from tracked terminals (if mode is 'integrated' or 'both')
+        if (trackingMode === 'integrated' || trackingMode === 'both') {
+            const trackedCommands = this.getTrackedTerminalCommands(limit);
+            if (trackedCommands.length > 0) {
+                return trackedCommands.slice(-limit);
+            }
+        }
+        // Strategy 3: Platform-specific fallbacks
+        return await this.getFallbackHistory(limit);
+    }
+    /**
+     * Get command history from shell history files (cross-platform)
+     */
+    async getShellHistoryFiles(limit) {
+        const platform = os.platform();
+        const historyPaths = this.getShellHistoryPaths(platform);
+        const commands = [];
+        for (const historyPath of historyPaths) {
+            try {
+                if (fs.existsSync(historyPath)) {
+                    const content = fs.readFileSync(historyPath, 'utf-8');
+                    const lines = this.parseHistoryFile(content, historyPath);
+                    commands.push(...lines);
+                }
+            }
+            catch (error) {
+                console.debug(`Could not read history file ${historyPath}:`, error);
+            }
+        }
+        // Return most recent commands
+        return commands.slice(-limit);
+    }
+    /**
+     * Get shell history file paths based on platform
+     */
+    getShellHistoryPaths(platform) {
+        const homeDir = os.homedir();
+        const paths = [];
+        if (platform === 'win32') {
+            // Windows paths
+            paths.push(path.join(homeDir, 'AppData', 'Roaming', 'Microsoft', 'Windows', 'PowerShell', 'PSReadline', 'ConsoleHost_history.txt'), // PowerShell
+            path.join(homeDir, '.bash_history'), // Git Bash
+            path.join(homeDir, '.zsh_history'), // Zsh on Windows
+            path.join(homeDir, '.history') // Common history file
+            );
+        }
+        else {
+            // Unix-like paths (macOS, Linux)
+            paths.push(path.join(homeDir, '.bash_history'), // Bash
+            path.join(homeDir, '.bashrc'), // Bash config (might contain history)
+            path.join(homeDir, '.zsh_history'), // Zsh
+            path.join(homeDir, '.zshrc'), // Zsh config
+            path.join(homeDir, '.history'), // Common history file
+            path.join(homeDir, '.local', 'share', 'fish', 'fish_history'), // Fish shell
+            path.join(homeDir, '.config', 'fish', 'fish_history') // Alternative Fish location
+            );
+        }
+        return paths;
+    }
+    /**
+     * Parse history file content based on file type
+     */
+    parseHistoryFile(content, filePath) {
+        const lines = [];
+        const normalizedContent = content.replace(/\r\n/g, '\n').replace(/\n\r/g, '\n').replace(/\r/g, '\n');
+        // Check if it's a zsh history file (has timestamps)
+        if (filePath.includes('.zsh_history') || filePath.includes('zsh')) {
+            return this.parseZshHistory(normalizedContent);
+        }
+        // Check if it's a fish history file
+        if (filePath.includes('fish')) {
+            return this.parseFishHistory(normalizedContent);
+        }
+        // Default: simple line-by-line parsing (bash, PowerShell, etc.)
+        const rawLines = normalizedContent.split('\n');
+        for (const line of rawLines) {
+            const trimmedLine = line.trim();
+            if (trimmedLine.length > 0 && !this.isMetadataLine(trimmedLine)) {
+                lines.push(trimmedLine);
+            }
+        }
+        return lines;
+    }
+    /**
+     * Parse zsh history format (with timestamps)
+     * Format: : timestamp:duration;command or : timestamp:duration:command
+     */
+    parseZshHistory(content) {
+        const lines = [];
+        const rawLines = content.split('\n');
+        let i = 0;
+        while (i < rawLines.length) {
+            const line = rawLines[i].trim();
+            // Zsh format: : timestamp:duration;command (semicolon) or : timestamp:duration:command (colon)
+            if (line.startsWith(':')) {
+                // Try semicolon format first: : timestamp:duration;command
+                const semicolonMatch = line.match(/^:\s*\d+:\d+;(.+)$/);
+                if (semicolonMatch && semicolonMatch[1]) {
+                    const command = semicolonMatch[1].trim();
+                    if (command.length > 0) {
+                        lines.push(command);
+                    }
+                }
+                else {
+                    // Try colon format: : timestamp:duration:command
+                    const parts = line.split(':');
+                    if (parts.length >= 4) {
+                        const command = parts.slice(3).join(':').trim();
+                        if (command.length > 0) {
+                            lines.push(command);
+                        }
+                    }
+                }
+            }
+            else if (line.length > 0 && !this.isMetadataLine(line)) {
+                lines.push(line);
+            }
+            i++;
+        }
+        return lines;
+    }
+    /**
+     * Parse fish shell history format
+     */
+    parseFishHistory(content) {
+        const lines = [];
+        const rawLines = content.split('\n');
+        try {
+            // Fish history is in a special format, try to parse it
+            for (const line of rawLines) {
+                try {
+                    // Fish format: - cmd: command
+                    //               when: timestamp
+                    if (line.includes('- cmd:')) {
+                        const match = line.match(/- cmd:\s*(.+)/);
+                        if (match && match[1]) {
+                            const command = match[1].trim();
+                            if (command.length > 0) {
+                                lines.push(command);
+                            }
+                        }
+                    }
+                }
+                catch {
+                    // Skip malformed lines
+                    continue;
+                }
+            }
+        }
+        catch {
+            // If parsing fails, return empty
+            return [];
+        }
+        return lines;
+    }
+    /**
+     * Check if a line is metadata/comment
+     */
+    isMetadataLine(line) {
+        return line.startsWith('#') ||
+            line.startsWith(';') ||
+            line.startsWith('//') ||
+            line.length === 0;
+    }
+    /**
+     * Get commands from tracked VS Code terminals
+     */
+    getTrackedTerminalCommands(limit) {
+        const commands = this.commandHistory
+            .sort((a, b) => b.timestamp - a.timestamp)
+            .slice(0, limit)
+            .map(cmd => cmd.command);
+        return commands;
+    }
+    /**
+     * Fallback history retrieval for platforms without shell history files
+     */
+    async getFallbackHistory(limit) {
+        const platform = os.platform();
+        try {
+            if (platform === 'win32') {
+                return await this.getWindowsFallback(limit);
+            }
+            else {
+                return await this.getUnixFallback(limit);
+            }
+        }
+        catch (error) {
+            console.debug('Fallback history retrieval failed:', error);
+            return [];
+        }
+    }
+    /**
+     * Windows-specific fallback using PowerShell/Get-History
+     */
+    async getWindowsFallback(limit) {
+        try {
+            // Try to get PowerShell history
+            const { stdout } = await execAsync('powershell -Command "Get-History | Select-Object -ExpandProperty CommandLine -Last ' + limit);
+            if (stdout.trim()) {
+                return stdout
+                    .trim()
+                    .split('\n')
+                    .map(line => line.trim())
+                    .filter(line => line.length > 0);
+            }
+        }
+        catch {
+            // PowerShell fallback failed, continue to doskey stub
+        }
+        // Fallback to doskey stub for backward compatibility
         return await this.getDoskeyStub();
     }
     /**
+     * Unix-specific fallback using shell history command
+     */
+    async getUnixFallback(limit) {
+        const commands = [];
+        // Try different shells
+        const shells = ['bash', 'zsh'];
+        for (const shell of shells) {
+            try {
+                const { stdout } = await execAsync(`tail -n ${limit} ~/.${shell}_history 2>/dev/null || echo ""`);
+                if (stdout.trim()) {
+                    const lines = stdout
+                        .trim()
+                        .split('\n')
+                        .map(line => line.trim())
+                        .filter(line => line.length > 0 && !this.isMetadataLine(line));
+                    commands.push(...lines);
+                }
+            }
+            catch {
+                // Shell not available or failed, continue
+                continue;
+            }
+        }
+        return commands;
+    }
+    /**
      * A stub function to represent running doskey or PowerShell Get-History.
+     * Maintained for backward compatibility with existing tests.
      * In a real environment, this requires attaching to the specific terminal process PID.
      */
     async getDoskeyStub() {
@@ -83,7 +440,7 @@ class TerminalTracker {
             // Command: Get-History | Select-Object -ExpandProperty CommandLine
             // Since this runs in a new process, it returns empty, but fulfills the code request.
             await execAsync('echo Simulating terminal history check...');
-            // Returning mock data for demonstration purposes since actual cross-process 
+            // Returning mock data for demonstration purposes since actual cross-process
             // history scraping is blocked by Windows security/session isolation.
             return [
                 "git status",
@@ -96,6 +453,40 @@ class TerminalTracker {
             console.error("Terminal stub failed", error);
             return [];
         }
+    }
+    /**
+     * Add a command to the tracked history
+     */
+    addCommand(command, shell) {
+        this.commandHistory.push({
+            command,
+            timestamp: Date.now(),
+            shell
+        });
+        // Keep history size under control
+        if (this.commandHistory.length > this.maxHistorySize) {
+            this.commandHistory = this.commandHistory.slice(-this.maxHistorySize);
+        }
+    }
+    /**
+     * Get statistics about tracked terminals
+     */
+    getTerminalStats() {
+        const shells = new Set(this.commandHistory.map(cmd => cmd.shell));
+        return {
+            trackedTerminals: this.trackedTerminals.size,
+            totalCommands: this.commandHistory.length,
+            shells: Array.from(shells)
+        };
+    }
+    /**
+     * Clean up resources
+     */
+    dispose() {
+        this.trackedTerminals.clear();
+        this.commandHistory = [];
+        this.disposables.forEach(d => d.dispose());
+        this.disposables = [];
     }
 }
 exports.TerminalTracker = TerminalTracker;

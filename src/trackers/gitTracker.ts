@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import { debounce, DebouncedFunction } from '../utils/debounce';
+import { debounce } from '../utils/debounce';
 import { createRateLimiter } from '../utils/rateLimiter';
 import { globalPerformanceMonitor } from '../utils/performanceMonitor';
 
@@ -24,7 +24,7 @@ export interface GitCommit {
 export class GitTracker {
   private cache: Map<string, { commits: GitCommit[]; timestamp: number }> = new Map();
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-  private debouncedGetRecentCommits: DebouncedFunction<typeof GitTracker.prototype.getRecentCommitsInternalImpl>;
+  private debouncedGetRecentCommits: (hours?: number) => Promise<GitCommit[]>;
   private rateLimiter = createRateLimiter({
     maxCalls: 10, // Maximum 10 git calls
     timeframe: 60000, // Within 60 seconds
@@ -38,7 +38,7 @@ export class GitTracker {
       1000,
       { maxWait: 5000 } // Max wait 5 seconds
     );
-    this.debouncedGetRecentCommits = debouncedFn.execute.bind(debouncedFn);
+    this.debouncedGetRecentCommits = (hours?: number) => Promise.resolve(debouncedFn.execute(hours)) as Promise<GitCommit[]>;
   }
 
   /**

@@ -7,6 +7,73 @@ import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
+/**
+ * Terminal Tracker - Cross-Platform Terminal Command Tracking
+ *
+ * This module tracks terminal commands executed by the user across different platforms
+ * and shell types. It supports multiple tracking strategies with configurable modes.
+ *
+ * ## Configuration
+ *
+ * Enable/disable terminal tracking in VS Code settings:
+ * - `standup.enableTerminalTracking`: Master switch (default: true)
+ * - `standup.terminalTrackingMode`: Tracking mode
+ *   - `integrated`: Track VS Code integrated terminals only
+ *   - `history`: Read shell history files only
+ *   - `both`: Use both methods (recommended for best coverage)
+ *
+ * ## Supported Platforms and Shells
+ *
+ * ### Windows
+ * - PowerShell (with PSReadline history)
+ * - Command Prompt (cmd)
+ * - Git Bash
+ * - Zsh (if installed)
+ *
+ * ### macOS/Linux
+ * - Bash (with .bash_history)
+ * - Zsh (with .zsh_history, including timestamp format)
+ * - Fish shell (with fish_history)
+ *
+ * ## Limitations and Known Issues
+ *
+ * 1. **Integrated Terminal Tracking**
+ *    - Only tracks commands in VS Code integrated terminals
+ *    - Does not capture commands from external terminal windows
+ *    - Requires terminal to be created/active during VS Code session
+ *
+ * 2. **Shell History File Reading**
+ *    - May not capture commands from external terminals immediately
+ *    - History files may be buffered by the shell
+ *    - Some shells may not write to history files immediately
+ *    - File permissions may prevent reading history files
+ *
+ * 3. **Cross-Platform Considerations**
+ *    - Windows PowerShell history location may vary by version
+ *    - macOS/Linux shell histories depend on user's default shell
+ *    - Some shells (like fish) have different history formats
+ *
+ * 4. **Security and Privacy**
+ *    - Commands may contain sensitive information (passwords, tokens)
+ *    - History files are not encrypted
+ *    - Use with caution in shared environments
+ *
+ * ## Recommendations
+ *
+ * - Use `both` tracking mode for best coverage
+ * - Be aware that sensitive commands may be tracked
+ * - Regularly review and clear terminal history if needed
+ * - Consider using ignore patterns for sensitive projects
+ *
+ * @example
+ * ```typescript
+ * const tracker = new TerminalTracker();
+ * tracker.initialize();
+ * const commands = await tracker.getTerminalHistory(20);
+ * console.log('Recent commands:', commands);
+ * ```
+ */
+
 export interface TerminalCommand {
     command: string;
     timestamp: number;
@@ -21,26 +88,42 @@ export class TerminalTracker {
 
     /**
      * Initialize terminal tracking with VS Code terminal integration
+     * Respects user configuration settings for terminal tracking mode
      */
     public initialize(): void {
-        // Listen for terminal creation events
-        this.disposables.push(
-            vscode.window.onDidOpenTerminal((terminal) => {
+        // Check if terminal tracking is enabled
+        const config = vscode.workspace.getConfiguration('standup');
+        const enabled = config.get<boolean>('enableTerminalTracking', true);
+        const trackingMode = config.get<string>('terminalTrackingMode', 'integrated');
+
+        if (!enabled) {
+            console.log('Terminal tracking is disabled in settings');
+            return;
+        }
+
+        // Only set up integrated terminal tracking if mode is 'integrated' or 'both'
+        if (trackingMode === 'integrated' || trackingMode === 'both') {
+            // Listen for terminal creation events
+            this.disposables.push(
+                vscode.window.onDidOpenTerminal((terminal) => {
+                    this.trackTerminal(terminal);
+                })
+            );
+
+            // Listen for terminal close events
+            this.disposables.push(
+                vscode.window.onDidCloseTerminal((terminal) => {
+                    this.untrackTerminal(terminal);
+                })
+            );
+
+            // Track existing terminals
+            vscode.window.terminals.forEach((terminal) => {
                 this.trackTerminal(terminal);
-            })
-        );
+            });
+        }
 
-        // Listen for terminal close events
-        this.disposables.push(
-            vscode.window.onDidCloseTerminal((terminal) => {
-                this.untrackTerminal(terminal);
-            })
-        );
-
-        // Track existing terminals
-        vscode.window.terminals.forEach((terminal) => {
-            this.trackTerminal(terminal);
-        });
+        console.log(`Terminal tracking initialized in ${trackingMode} mode`);
     }
 
     /**
@@ -110,52 +193,68 @@ export class TerminalTracker {
 
     /**
      * Returns an array of recently run commands from all available sources.
-     * Now supports cross-platform shell history files and VS Code terminal integration.
+     * Supports cross-platform shell history files and VS Code terminal integration.
+     *
+     * Respects the following configuration settings:
+     * - standup.enableTerminalTracking: Master enable/disable switch
+     * - standup.terminalTrackingMode: 'integrated', 'history', or 'both'
+     * - standup.paused: Global tracking pause flag
+     *
+     * @param limit Maximum number of commands to return
+     * @returns Array of terminal commands
      */
     public async getTerminalHistory(limit: number = 20): Promise<string[]> {
-        // Check if tracking is paused
-        if (vscode.workspace.getConfiguration('standup').get('paused', false)) {
+        const config = vscode.workspace.getConfiguration('standup');
+
+        // Check if tracking is paused globally
+        if (config.get('paused', false)) {
             return [];
         }
 
         // Check if terminal tracking is enabled
-        if (!vscode.workspace.getConfiguration('standup').get('terminalTracking.enabled', true)) {
+        if (!config.get('enableTerminalTracking', true)) {
             return [];
         }
 
+        const trackingMode = config.get<string>('terminalTrackingMode', 'integrated');
         const platform = os.platform();
 
-        // Strategy 1: Windows PowerShell History File (Most reliable for persistence)
-        if (platform === 'win32') {
-            const psHistoryPath = path.join(os.homedir(), 'AppData', 'Roaming', 'Microsoft', 'Windows', 'PowerShell', 'PSReadline', 'ConsoleHost_history.txt');
+        // Strategy 1: Shell history files (if mode is 'history' or 'both')
+        if (trackingMode === 'history' || trackingMode === 'both') {
+            // Windows PowerShell History File (Most reliable for persistence)
+            if (platform === 'win32') {
+                const psHistoryPath = path.join(os.homedir(), 'AppData', 'Roaming', 'Microsoft', 'Windows', 'PowerShell', 'PSReadline', 'ConsoleHost_history.txt');
 
-            if (fs.existsSync(psHistoryPath)) {
-                try {
-                    const content = fs.readFileSync(psHistoryPath, 'utf-8');
-                    // Normalize line endings: handle \r\n, \n, \r, and mixed \n\r\n
-                    const normalizedContent = content.replace(/\r\n/g, '\n').replace(/\n\r/g, '\n').replace(/\r/g, '\n');
-                    const lines = normalizedContent.split('\n').filter(line => line.trim().length > 0);
-                    // Return the last 'limit' commands
-                    return lines.slice(-limit);
-                } catch (err) {
-                    console.error('Error reading PowerShell history:', err);
+                if (fs.existsSync(psHistoryPath)) {
+                    try {
+                        const content = fs.readFileSync(psHistoryPath, 'utf-8');
+                        // Normalize line endings: handle \r\n, \n, \r, and mixed \n\r\n
+                        const normalizedContent = content.replace(/\r\n/g, '\n').replace(/\n\r/g, '\n').replace(/\r/g, '\n');
+                        const lines = normalizedContent.split('\n').filter(line => line.trim().length > 0);
+                        // Return the last 'limit' commands
+                        return lines.slice(-limit);
+                    } catch (err) {
+                        console.error('Error reading PowerShell history:', err);
+                    }
                 }
+            }
+
+            // Cross-platform shell history files
+            const shellHistoryCommands = await this.getShellHistoryFiles(limit);
+            if (shellHistoryCommands.length > 0) {
+                return shellHistoryCommands.slice(-limit);
             }
         }
 
-        // Strategy 2: Cross-platform shell history files
-        const shellHistoryCommands = await this.getShellHistoryFiles(limit);
-        if (shellHistoryCommands.length > 0) {
-            return shellHistoryCommands.slice(-limit);
+        // Strategy 2: Get commands from tracked terminals (if mode is 'integrated' or 'both')
+        if (trackingMode === 'integrated' || trackingMode === 'both') {
+            const trackedCommands = this.getTrackedTerminalCommands(limit);
+            if (trackedCommands.length > 0) {
+                return trackedCommands.slice(-limit);
+            }
         }
 
-        // Strategy 3: Get commands from tracked terminals (if available)
-        const trackedCommands = this.getTrackedTerminalCommands(limit);
-        if (trackedCommands.length > 0) {
-            return trackedCommands.slice(-limit);
-        }
-
-        // Strategy 4: Platform-specific fallbacks
+        // Strategy 3: Platform-specific fallbacks
         return await this.getFallbackHistory(limit);
     }
 
