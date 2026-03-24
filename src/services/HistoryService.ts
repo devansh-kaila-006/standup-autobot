@@ -22,6 +22,13 @@ export class HistoryService {
   constructor(private context: vscode.ExtensionContext) {}
 
   /**
+   * Generates a unique ID for standup entries.
+   */
+  private generateUniqueId(): string {
+    return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  }
+
+  /**
    * Saves a new standup entry and trims history to the last 30 days.
    */
   public async saveStandup(text: string): Promise<void> {
@@ -30,7 +37,7 @@ export class HistoryService {
     const dateStr = now.toISOString().split('T')[0];
 
     const newEntry: StandupEntry = {
-      id: Date.now().toString(),
+      id: this.generateUniqueId(),
       date: dateStr,
       timestamp: now.getTime(),
       text
@@ -66,12 +73,14 @@ export class HistoryService {
       activities.push({ date: today, fileCount });
     }
 
-    // Keep only last 30 days of activity too
-    if (activities.length > 30) {
-        activities.shift();
-    }
+    // Keep only last 30 days of activity (exclusive of the 30th day)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const cutoffDate = thirtyDaysAgo.toISOString().split('T')[0];
 
-    await this.context.globalState.update(HistoryService.ACTIVITY_KEY, activities);
+    const filteredActivities = activities.filter(a => a.date > cutoffDate);
+
+    await this.context.globalState.update(HistoryService.ACTIVITY_KEY, filteredActivities);
   }
 
   /**

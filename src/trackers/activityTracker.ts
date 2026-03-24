@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import { isIgnored } from '../utils/ignore';
 import { ConfigManager } from '../utils/ConfigManager';
+import { debounce, DebouncedFunction } from '../utils/debounce';
+import { globalPerformanceMonitor } from '../utils/performanceMonitor';
 
 interface FileStats {
   /** Total accumulated seconds the user was actively working on this file */
@@ -19,17 +21,27 @@ export interface ActivityReport {
 
 export class ActivityTracker {
   // Threshold in milliseconds (60 seconds) to consider a file "active"
-  private readonly ACTIVE_THRESHOLD = 60 * 1000; 
-  
+  private readonly ACTIVE_THRESHOLD = 60 * 1000;
+
   // Store data in memory: Key = File URI string, Value = Stats
   private stats: Map<string, FileStats> = new Map();
 
   private disposable: vscode.Disposable;
   private intervalTimer?: NodeJS.Timeout;
+  private debouncedSaveState: DebouncedFunction<typeof ActivityTracker.prototype.saveStateImmediate>;
+  private pendingSaves: Set<string> = new Set();
+  private saveTimer?: NodeJS.Timeout;
 
   constructor(private context: vscode.ExtensionContext) {
     // Load previously saved data
     this.loadState();
+
+    // Create debounced saveState (save after 1 second of inactivity)
+    const debouncedFn = debounce(
+      this.saveStateImmediate.bind(this),
+      1000
+    );
+    this.debouncedSaveState = debouncedFn.execute.bind(debouncedFn);
 
     // 1. Track file switches
     const activeTextEditorSubscription = vscode.window.onDidChangeActiveTextEditor((editor) => {
@@ -38,7 +50,7 @@ export class ActivityTracker {
       }
     });
 
-    // 2. Track text modifications
+    // 2. Track text modifications (debounced to reduce overhead)
     const textDocumentChangeSubscription = vscode.workspace.onDidChangeTextDocument((e) => {
       if (e.document.uri.scheme === 'file') {
         // Calculate lines changed in this specific edit
@@ -60,6 +72,7 @@ export class ActivityTracker {
   /**
    * Updates the last active timestamp and increments line counters.
    */
+  @MeasurePerformance('activityTracker.updateFileActivity')
   private updateFileActivity(filePath: string, linesAdded: number) {
     // 1. Check if tracking is paused
     if (this.context.globalState.get<boolean>('standup.paused', false)) {
@@ -83,9 +96,12 @@ export class ActivityTracker {
     currentStats.lastActiveTimestamp = Date.now();
 
     this.stats.set(filePath, currentStats);
-    
-    // Persist immediately on significant events to avoid data loss on crash
-    this.saveState();
+
+    // Mark this file as pending save
+    this.pendingSaves.add(filePath);
+
+    // Debounce save to reduce VS Code state operations
+    this.debouncedSaveState();
   }
 
   /**
@@ -160,11 +176,20 @@ export class ActivityTracker {
   }
 
   /**
-   * Save current stats to VS Code global state.
+   * Save current stats to VS Code global state (immediate).
    */
-  private saveState() {
+  private saveStateImmediate() {
     const plainObj = Object.fromEntries(this.stats.entries());
     this.context.globalState.update('activityTrackerData', plainObj);
+    this.pendingSaves.clear();
+  }
+
+  /**
+   * Save current stats to VS Code global state (debounced).
+   */
+  private saveState() {
+    // Use debounced version to reduce write operations
+    this.debouncedSaveState();
   }
 
   /**
@@ -183,10 +208,22 @@ export class ActivityTracker {
   }
 
   public dispose() {
+    // Cancel any pending debounced saves
+    if (this.debouncedSaveState && typeof (this.debouncedSaveState as any).cancel === 'function') {
+      (this.debouncedSaveState as any).cancel();
+    }
+
+    if (this.saveTimer) {
+      clearTimeout(this.saveTimer);
+    }
+
     if (this.intervalTimer) {
       clearInterval(this.intervalTimer);
     }
+
     this.disposable.dispose();
-    this.saveState(); // Final save on dispose
+
+    // Final save on dispose (immediate)
+    this.saveStateImmediate();
   }
 }

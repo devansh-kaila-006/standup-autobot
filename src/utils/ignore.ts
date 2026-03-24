@@ -7,10 +7,15 @@ export function isIgnored(filePath: string, patterns: string[]): boolean {
 
     return patterns.some(pattern => {
         const p = pattern.replace(/\\/g, '/').toLowerCase();
-        
+
         // 1. Handle common recursive patterns: **/node_modules/** or node_modules/**
-        const cleanPattern = p.replace(/^\*\*\//, '').replace(/\/\*\*$/, '');
-        if (normalizedPath.includes(cleanPattern)) {
+        let cleanPattern = p.replace(/^\*\*\//, '').replace(/\/\*\*$/, '');
+        // Remove trailing slash for matching
+        cleanPattern = cleanPattern.replace(/\/$/, '');
+
+        // Check if pattern appears as a complete path segment (directory name or filename)
+        const segments = normalizedPath.split('/');
+        if (segments.some(segment => segment === cleanPattern || segment.startsWith(cleanPattern + '.'))) {
             return true;
         }
 

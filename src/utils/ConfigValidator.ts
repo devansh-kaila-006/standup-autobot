@@ -33,12 +33,33 @@ export const StandupConfigSchema = z.object({
     enableTracking: z.boolean().default(true),
     trackingInterval: z.number().int().min(1000).max(60000).default(5000), // 1s to 60s
     maxHistorySize: z.number().int().min(10).max(10000).default(1000),
+
+    // Phase 2.2: Memory management settings
     dataRetentionDays: z.number().int().min(1).max(365).default(30),
+    autoCleanupEnabled: z.boolean().default(false),
+    cleanupIntervalDays: z.number().int().min(1).max(90).default(7),
+    maxCacheSize: z.number().int().min(10).max(1000).default(100),
+    memoryProfilingEnabled: z.boolean().default(true),
 
     // Feature flags
     enableSmartAlerts: z.boolean().default(true),
     enableWeeklyDigest: z.boolean().default(true),
     enableAutoTagging: z.boolean().default(true),
+
+    // Phase 2: Terminal tracking settings
+    terminalTracking: z.object({
+        enabled: z.boolean().default(true),
+        shells: z.array(z.enum(['bash', 'zsh', 'powershell', 'cmd', 'fish'])).default(['bash', 'zsh', 'powershell']),
+        historyLimit: z.number().int().min(1).max(100).default(20),
+        enableRealtimeTracking: z.boolean().default(false),
+        respectHignore: z.boolean().default(true),
+    }).optional().default({
+        enabled: true,
+        shells: ['bash', 'zsh', 'powershell'],
+        historyLimit: 20,
+        enableRealtimeTracking: false,
+        respectHignore: true,
+    }),
 });
 
 export type StandupConfig = z.infer<typeof StandupConfigSchema>;

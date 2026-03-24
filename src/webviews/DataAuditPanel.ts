@@ -36,8 +36,15 @@ export class DataAuditPanel {
             message => {
                 switch (message.command) {
                     case 'confirm':
-                        onConfirm();
-                        this.dispose();
+                        try {
+                            onConfirm();
+                        } catch (error) {
+                            // Handle errors gracefully
+                            console.error('Error during confirmation:', error);
+                            vscode.window.showErrorMessage(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                        } finally {
+                            this.dispose();
+                        }
                         return;
                     case 'cancel':
                         this.dispose();

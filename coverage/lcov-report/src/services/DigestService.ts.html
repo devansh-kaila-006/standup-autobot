@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/11</span>
+                <span class='fraction'>11/11</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/1</span>
+                <span class='fraction'>1/1</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/11</span>
+                <span class='fraction'>11/11</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -110,7 +110,7 @@
 <a name='L45'></a><a href='#L45'>45</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -120,61 +120,61 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">38x</span>
+<span class="cline-any cline-yes">38x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { StandupEntry } from './HistoryService';
 import { StandupGenerator } from './standupGenerator';
 &nbsp;
-<span class="cstat-no" title="statement not covered" >export class D</span>igestService {
+export class DigestService {
   /**
    * Generates a weekly summary using the Gemini API.
    */
-<span class="fstat-no" title="function not covered" >  static </span>async generateWeeklyDigest(
+  static async generateWeeklyDigest(
     history: StandupEntry[], 
     generator: StandupGenerator,
     apiKey: string
   ): Promise&lt;string&gt; {
     
-<span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (history.length &lt; 3) {</span>
-<span class="cstat-no" title="statement not covered" >      return "Not enough standup history available for a weekly digest (minimum 3 required).";</span>
+    if (history.length &lt; 3) {
+      return "Not enough standup history available for a weekly digest (minimum 3 required).";
     }
 &nbsp;
     // Format data for the prompt
-    const dataString = <span class="cstat-no" title="statement not covered" >history.map(<span class="fstat-no" title="function not covered" >entry </span>=&gt; {</span>
-      const date = <span class="cstat-no" title="statement not covered" >new Date(entry.timestamp).toLocaleDateString();</span>
-<span class="cstat-no" title="statement not covered" >      return `Date: ${date}\nNotes: ${entry.text}`;</span>
+    const dataString = history.map(entry =&gt; {
+      const date = new Date(entry.timestamp).toLocaleDateString();
+      return `Date: ${date}\nNotes: ${entry.text}`;
     }).join('\n\n---\n\n');
 &nbsp;
-    const prompt = <span class="cstat-no" title="statement not covered" >`</span>
+    const prompt = `
       You are a helpful engineering manager assistant.
       Here are the raw standup notes from a developer for the past week:
       
@@ -185,13 +185,13 @@ import { StandupGenerator } from './standupGenerator';
       Be concise and professional.
     `;
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    try {</span>
+    try {
       // Re-using the generateContent logic or similar from StandupGenerator
       // For simplicity, we can add a generic generate method to StandupGenerator or use it directly
-<span class="cstat-no" title="statement not covered" >      return await generator.generateContent(prompt, apiKey);</span>
+      return await generator.generateContent(prompt, apiKey);
     } catch (error) {
-<span class="cstat-no" title="statement not covered" >      console.error("Weekly digest generation failed:", error);</span>
-<span class="cstat-no" title="statement not covered" >      return "Failed to generate weekly digest.";</span>
+      console.error("Weekly digest generation failed:", error);
+      return "Failed to generate weekly digest.";
     }
   }
 }
@@ -202,7 +202,7 @@ import { StandupGenerator } from './standupGenerator';
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-03-23T16:21:20.603Z
+                at 2026-03-24T01:28:13.720Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

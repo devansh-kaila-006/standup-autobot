@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">9.09% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>1/11</span>
+                <span class='fraction'>14/14</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/4</span>
+                <span class='fraction'>6/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>3/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">9.09% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>1/11</span>
+                <span class='fraction'>13/13</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -89,56 +89,71 @@
 <a name='L24'></a><a href='#L24'>24</a>
 <a name='L25'></a><a href='#L25'>25</a>
 <a name='L26'></a><a href='#L26'>26</a>
-<a name='L27'></a><a href='#L27'>27</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">54x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">54x</span>
+<span class="cline-any cline-yes">95x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">95x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">95x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">95x</span>
+<span class="cline-any cline-yes">430x</span>
+<span class="cline-any cline-yes">32x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">63x</span>
+<span class="cline-any cline-yes">27x</span>
+<span class="cline-any cline-yes">27x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">36x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * Utility to check if a path matches any of the given glob patterns.
  * Simplified glob-to-regex conversion for internal use.
  */
-export function <span class="fstat-no" title="function not covered" >isIgnored(</span>filePath: string, patterns: string[]): boolean {
-    const normalizedPath = <span class="cstat-no" title="statement not covered" >filePath.replace(/\\/g, '/').toLowerCase();</span>
+export function isIgnored(filePath: string, patterns: string[]): boolean {
+    const normalizedPath = filePath.replace(/\\/g, '/').toLowerCase();
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    return patterns.some(<span class="fstat-no" title="function not covered" >pattern </span>=&gt; {</span>
-        const p = <span class="cstat-no" title="statement not covered" >pattern.replace(/\\/g, '/').toLowerCase();</span>
-        
+    return patterns.some(pattern =&gt; {
+        const p = pattern.replace(/\\/g, '/').toLowerCase();
+&nbsp;
         // 1. Handle common recursive patterns: **/node_modules/** or node_modules/**
-        const cleanPattern = <span class="cstat-no" title="statement not covered" >p.replace(/^\*\*\//, '').replace(/\/\*\*$/, '');</span>
-<span class="cstat-no" title="statement not covered" >        <span class="missing-if-branch" title="if path not taken" >I</span>if (normalizedPath.includes(cleanPattern)) {</span>
-<span class="cstat-no" title="statement not covered" >            return true;</span>
+        let cleanPattern = p.replace(/^\*\*\//, '').replace(/\/\*\*$/, '');
+        // Remove trailing slash for matching
+        cleanPattern = cleanPattern.replace(/\/$/, '');
+&nbsp;
+        // Check if pattern appears as a complete path segment (directory name or filename)
+        const segments = normalizedPath.split('/');
+        if (segments.some(segment =&gt; segment === cleanPattern || segment.startsWith(cleanPattern + '.'))) {
+            return true;
         }
 &nbsp;
         // 2. Handle simple extension wildcards: *.log
-<span class="cstat-no" title="statement not covered" >        <span class="missing-if-branch" title="if path not taken" >I</span>if (p.startsWith('*.')) {</span>
-            const ext = <span class="cstat-no" title="statement not covered" >p.substring(1);</span>
-<span class="cstat-no" title="statement not covered" >            return normalizedPath.endsWith(ext);</span>
+        if (p.startsWith('*.')) {
+            const ext = p.substring(1);
+            return normalizedPath.endsWith(ext);
         }
 &nbsp;
         // 3. Exact match or simple prefix
-<span class="cstat-no" title="statement not covered" >        return normalizedPath === p || normalizedPath.startsWith(p + '/');</span>
+        return normalizedPath === p || normalizedPath.startsWith(p + '/');
     });
 }
 &nbsp;</pre></td></tr></table></pre>
@@ -148,7 +163,7 @@ export function <span class="fstat-no" title="function not covered" >isIgnored(<
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-03-23T16:21:20.660Z
+                at 2026-03-24T01:28:13.778Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

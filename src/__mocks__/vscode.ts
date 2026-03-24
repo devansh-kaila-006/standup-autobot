@@ -1,14 +1,43 @@
 // Mock for VS Code API
+
+// Store callbacks for testing
+const callbacks = {
+    onDidChangeActiveTextEditor: [] as ((editor: any) => void)[],
+    onDidChangeTextDocument: [] as ((event: any) => void)[],
+};
+
+class MockDisposable {
+    constructor(private callback?: () => void) {}
+
+    dispose() {
+        this.callback?.();
+    }
+
+    static from(...disposables: any[]) {
+        const disposable = new MockDisposable();
+        (disposable as any).innerDisposables = disposables;
+        return disposable;
+    }
+}
+
 export const window = {
     createWebviewPanel: jest.fn(),
     showInformationMessage: jest.fn(),
     showErrorMessage: jest.fn(),
     showWarningMessage: jest.fn(),
     showInputBox: jest.fn(),
-    createOutputChannel: jest.fn(),
+    createOutputChannel: jest.fn(() => ({
+        appendLine: jest.fn(),
+        clear: jest.fn(),
+        show: jest.fn(),
+        dispose: jest.fn(),
+    })),
     withProgress: jest.fn(),
     activeTextEditor: null,
-    onDidChangeActiveTextEditor: jest.fn(),
+    onDidChangeActiveTextEditor: jest.fn((callback: (editor: any) => void) => {
+        callbacks.onDidChangeActiveTextEditor.push(callback);
+        return new MockDisposable();
+    }),
 };
 
 export const workspace = {
@@ -20,7 +49,10 @@ export const workspace = {
     workspaceFolders: [],
     onDidChangeConfiguration: jest.fn(),
     onDidSaveTextDocument: jest.fn(),
-    onDidChangeTextDocument: jest.fn(),
+    onDidChangeTextDocument: jest.fn((callback: (event: any) => void) => {
+        callbacks.onDidChangeTextDocument.push(callback);
+        return new MockDisposable();
+    }),
     onDidOpenTextDocument: jest.fn(),
     onDidCloseTextDocument: jest.fn(),
     fs: {
@@ -49,8 +81,13 @@ export const env = {
 };
 
 export const Uri = {
-    file: (path: string) => ({ fsPath: path, toString: () => path }),
-    parse: jest.fn(),
+    file: (path: string) => ({ fsPath: path, scheme: 'file', toString: () => path }),
+    parse: jest.fn((uri: string) => {
+        if (uri.startsWith('file:')) {
+            return { fsPath: uri.replace('file://', ''), scheme: 'file', toString: () => uri };
+        }
+        return { fsPath: uri, scheme: 'untitled', toString: () => uri };
+    }),
 };
 
 export const Range = jest.fn();
@@ -67,20 +104,6 @@ export const ExtensionMode = {
     Development: 2,
     Test: 3,
 };
-
-class MockDisposable {
-    static from(...disposables: any[]) {
-        const disposable = new MockDisposable();
-        (disposable as any).innerDisposables = disposables;
-        return disposable;
-    }
-
-    dispose() {
-        if ((this as any).innerDisposables) {
-            (this as any).innerDisposables.forEach((d: any) => d.dispose?.());
-        }
-    }
-}
 
 export const Disposable = MockDisposable as any;
 
@@ -105,4 +128,9 @@ export default {
     StatusBarAlignment,
     ThemeColor,
     ConfigurationTarget,
+    Disposable,
+    callbacks,
 };
+
+// Export for use in tests
+export { callbacks, MockDisposable };

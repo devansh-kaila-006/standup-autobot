@@ -3,9 +3,9 @@ import { ActivityTracker } from '../../trackers/activityTracker';
 import { GitTracker } from '../../trackers/gitTracker';
 import { HistoryService } from '../../services/HistoryService';
 import * as vscode from 'vscode';
+import { callbacks as mockCallbacks } from '../../__mocks__/vscode';
 
-// Mock VS Code API
-jest.mock('vscode');
+// Mock fetch for API calls
 const mockFetch = jest.fn();
 global.fetch = mockFetch as any;
 
@@ -21,7 +21,13 @@ describe('Integration Tests', () => {
             // Setup mock context
             mockContext = {
                 globalState: {
-                    get: jest.fn().mockReturnValue(false),
+                    get: jest.fn((key: string, defaultValue?: any) => {
+                        if (key === 'standup.paused') return false;
+                        if (key === 'standup.history') return [];
+                        if (key === 'standup.activityDaily') return [];
+                        if (key === 'activityTrackerData') return undefined;
+                        return defaultValue;
+                    }),
                     update: jest.fn(),
                     keys: []
                 },
@@ -81,8 +87,26 @@ describe('Integration Tests', () => {
                 }
             } as any;
 
-            const onActiveEditorCallback = (vscode.window.onDidChangeActiveTextEditor as jest.Mock).mock.calls[0][0];
-            onActiveEditorCallback(mockEditor);
+            // Trigger the callback
+            mockCallbacks.onDidChangeActiveTextEditor[0](mockEditor);
+
+            // Add a document change to ensure the file appears in results
+            const mockChangeEvent = {
+                document: {
+                    uri: vscode.Uri.file('/test/workspace/src/app.ts'),
+                    scheme: 'file'
+                },
+                contentChanges: [
+                    {
+                        range: {
+                            start: { line: 0, character: 0 },
+                            end: { line: 5, character: 0 }
+                        },
+                        text: 'new content'
+                    }
+                ]
+            } as any;
+            mockCallbacks.onDidChangeTextDocument[0](mockChangeEvent);
 
             // 2. Get activity data
             const topFiles = activityTracker.getTopFiles(5);
