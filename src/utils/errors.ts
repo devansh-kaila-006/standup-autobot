@@ -47,7 +47,7 @@ export class APIError extends StandupError {
         super(message, 'API_ERROR', details);
     }
 
-    getUserMessage(): string {
+    override getUserMessage(): string {
         if (this.statusCode === 401) {
             return 'Authentication failed. Please check your API key.';
         }
@@ -73,7 +73,7 @@ export class ConfigurationError extends StandupError {
         super(message, 'CONFIG_ERROR', details);
     }
 
-    getUserMessage(): string {
+    override getUserMessage(): string {
         if (this.configKey) {
             return `Invalid configuration for "${this.configKey}": ${this.message}`;
         }
@@ -93,7 +93,7 @@ export class TrackingError extends StandupError {
         super(message, 'TRACKING_ERROR', details);
     }
 
-    getUserMessage(): string {
+    override getUserMessage(): string {
         if (this.trackingType === 'git') {
             return `Git tracking error: ${this.message}`;
         }
@@ -119,7 +119,7 @@ export class StorageError extends StandupError {
         super(message, 'STORAGE_ERROR', details);
     }
 
-    getUserMessage(): string {
+    override getUserMessage(): string {
         return `Storage Error: ${this.message}`;
     }
 }
@@ -136,7 +136,7 @@ export class ValidationError extends StandupError {
         super(message, 'VALIDATION_ERROR', details);
     }
 
-    getUserMessage(): string {
+    override getUserMessage(): string {
         if (this.field) {
             return `Invalid value for "${this.field}": ${this.message}`;
         }
@@ -156,7 +156,7 @@ export class ExportError extends StandupError {
         super(message, 'EXPORT_ERROR', details);
     }
 
-    getUserMessage(): string {
+    override getUserMessage(): string {
         if (this.exportType) {
             return `Failed to export to ${this.exportType}: ${this.message}`;
         }

@@ -13,6 +13,7 @@
 import * as vscode from 'vscode';
 import * as https from 'https';
 import { Logger } from '../utils/Logger';
+import { Icons } from '../utils/iconUtils';
 
 const logger = new Logger('TeamsService');
 
@@ -309,14 +310,14 @@ export class TeamsService {
                 text: `**Date:** ${new Date().toLocaleDateString()}`,
             },
             {
-                title: '✅ Completed Yesterday',
+                title: 'Completed Yesterday',
                 facts: standupData.yesterday.map(item => ({
                     title: '•',
                     value: item,
                 })),
             },
             {
-                title: '🎯 Working on Today',
+                title: 'Working on Today',
                 facts: standupData.today.map(item => ({
                     title: '•',
                     value: item,
@@ -338,7 +339,7 @@ export class TeamsService {
         // Add goals if any
         if (standupData.goals && standupData.goals.length > 0) {
             sections.push({
-                title: '🎯 Goals',
+                title: 'Goals',
                 facts: standupData.goals.map(goal => ({
                     title: '•',
                     value: goal,

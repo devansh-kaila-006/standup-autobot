@@ -329,13 +329,17 @@ export class AccessibilityManager {
      * Check if screen reader is active
      */
     public isScreenReaderActive(): boolean {
-        // Check for common screen reader indicators
-        return (
-            window.navigator.userAgent.includes('JAWS') ||
-            window.navigator.userAgent.includes('NVDA') ||
-            window.navigator.userAgent.includes('VOICEOVER') ||
-            window.speechSynthesis !== undefined
-        );
+        // Check for common screen reader indicators (only in browser context)
+        if (typeof (globalThis as any).window !== 'undefined' && (globalThis as any).window?.navigator) {
+            const win = (globalThis as any).window;
+            return (
+                win.navigator.userAgent.includes('JAWS') ||
+                win.navigator.userAgent.includes('NVDA') ||
+                win.navigator.userAgent.includes('VOICEOVER') ||
+                win.speechSynthesis !== undefined
+            );
+        }
+        return false;
     }
 
     /**

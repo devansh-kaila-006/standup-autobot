@@ -67,7 +67,7 @@ describe('auth', () => {
 
             expect(result).toBe(testApiKey);
             expect(mockContext.secrets.store).toHaveBeenCalledWith('standup.autobot.apiKey', testApiKey);
-            expect(vscode.window.showInformationMessage).toHaveBeenCalledWith('API Key saved securely! 🛡️');
+            expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(expect.stringContaining('API Key saved securely!'));
         });
 
         it('should return undefined when user cancels input', async () => {

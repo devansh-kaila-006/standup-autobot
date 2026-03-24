@@ -8,12 +8,19 @@
 import * as vscode from 'vscode';
 import { AnalyticsService } from '../services/AnalyticsService';
 import { getNonce } from '../utils/getNonce';
+import { ThemeManager } from './ThemeManager';
+import { AccessibilityManager } from './AccessibilityManager';
+import { I18nService } from '../i18n/I18nService';
+import { SVGIcons } from '../utils/iconUtils';
 
 export class AnalyticsPanel {
     public static currentPanel: AnalyticsPanel | undefined;
     private readonly _panel: vscode.WebviewPanel;
     private _disposables: vscode.Disposable[] = [];
     private analyticsService: AnalyticsService;
+    private themeManager: ThemeManager;
+    private accessibilityManager: AccessibilityManager;
+    private i18nService: I18nService;
 
     public static createOrShow(extensionUri: vscode.Uri, context: vscode.ExtensionContext) {
         const column = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined;
@@ -40,6 +47,12 @@ export class AnalyticsPanel {
     private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, context: vscode.ExtensionContext) {
         this._panel = panel;
         this.analyticsService = new AnalyticsService(context);
+
+        // Initialize Phase 7 services
+        this.themeManager = new ThemeManager();
+        this.accessibilityManager = new AccessibilityManager();
+        this.i18nService = new I18nService(context);
+
         this._update(extensionUri);
 
         this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
@@ -310,12 +323,12 @@ ${report.recommendations.map(r => `  • ${r}`).join('\n')}
             <body>
                 <div class="container">
                     <div class="header">
-                        <h1>📊 Analytics Dashboard</h1>
+                        <h1>${SVGIcons.chart()} Analytics Dashboard</h1>
                         <div class="actions">
-                            <button onclick="generateSprint()">📈 Sprint Summary</button>
+                            <button onclick="generateSprint()">${SVGIcons.trendingUp()} Sprint Summary</button>
                             <button onclick="getHealth()">🏥 Health Report</button>
                             <button onclick="exportCSV()">📥 Export CSV</button>
-                            <button onclick="refresh()">🔄 Refresh</button>
+                            <button onclick="refresh()">${SVGIcons.refresh()} Refresh</button>
                         </div>
                     </div>
 

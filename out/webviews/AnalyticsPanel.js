@@ -43,6 +43,10 @@ exports.AnalyticsPanel = void 0;
 const vscode = __importStar(require("vscode"));
 const AnalyticsService_1 = require("../services/AnalyticsService");
 const getNonce_1 = require("../utils/getNonce");
+const ThemeManager_1 = require("./ThemeManager");
+const AccessibilityManager_1 = require("./AccessibilityManager");
+const I18nService_1 = require("../i18n/I18nService");
+const iconUtils_1 = require("../utils/iconUtils");
 class AnalyticsPanel {
     static createOrShow(extensionUri, context) {
         const column = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined;
@@ -61,6 +65,10 @@ class AnalyticsPanel {
         this._disposables = [];
         this._panel = panel;
         this.analyticsService = new AnalyticsService_1.AnalyticsService(context);
+        // Initialize Phase 7 services
+        this.themeManager = new ThemeManager_1.ThemeManager();
+        this.accessibilityManager = new AccessibilityManager_1.AccessibilityManager();
+        this.i18nService = new I18nService_1.I18nService(context);
         this._update(extensionUri);
         this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
         this._panel.webview.onDidReceiveMessage(async (message) => {
@@ -303,12 +311,12 @@ ${report.recommendations.map(r => `  • ${r}`).join('\n')}
             <body>
                 <div class="container">
                     <div class="header">
-                        <h1>📊 Analytics Dashboard</h1>
+                        <h1>${iconUtils_1.SVGIcons.chart()} Analytics Dashboard</h1>
                         <div class="actions">
-                            <button onclick="generateSprint()">📈 Sprint Summary</button>
+                            <button onclick="generateSprint()">${iconUtils_1.SVGIcons.trendingUp()} Sprint Summary</button>
                             <button onclick="getHealth()">🏥 Health Report</button>
                             <button onclick="exportCSV()">📥 Export CSV</button>
-                            <button onclick="refresh()">🔄 Refresh</button>
+                            <button onclick="refresh()">${iconUtils_1.SVGIcons.refresh()} Refresh</button>
                         </div>
                     </div>
 

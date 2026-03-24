@@ -15,7 +15,18 @@ jest.mock('vscode', () => {
         onDidDispose: jest.fn(),
     };
 
+    const mockWorkspace = {
+        getConfiguration: jest.fn(() => ({
+            get: jest.fn((key: string) => {
+                if (key === 'workbench.colorTheme') return 'Dark+';
+                return undefined;
+            }),
+            update: jest.fn(),
+        })),
+    };
+
     return {
+        workspace: mockWorkspace,
         window: {
             activeTextEditor: {
                 viewColumn: 1,
@@ -56,6 +67,7 @@ jest.mock('../../utils/getNonce', () => ({
 
 describe('StandupCardProvider', () => {
     let mockExtensionUri: vscode.Uri;
+    let mockContext: vscode.ExtensionContext;
     let mockPanel: any;
 
     beforeEach(() => {
@@ -64,6 +76,17 @@ describe('StandupCardProvider', () => {
         mockExtensionUri = {
             scheme: 'file',
             path: '/extension/path',
+        } as any;
+
+        mockContext = {
+            globalState: {
+                get: jest.fn(),
+                update: jest.fn(),
+            },
+            secrets: {
+                get: jest.fn(),
+                store: jest.fn(),
+            },
         } as any;
 
         let capturedHtml = '';
@@ -101,7 +124,7 @@ describe('StandupCardProvider', () => {
         it('should create a new webview panel', () => {
             const markdown = '# Test Standup';
 
-            StandupCardProvider.createOrShow(mockExtensionUri, markdown);
+            StandupCardProvider.createOrShow(mockExtensionUri, markdown, mockContext);
 
             expect(vscode.window.createWebviewPanel).toHaveBeenCalledWith(
                 'standupAutobot.standupCard',
@@ -349,7 +372,7 @@ describe('StandupCardProvider', () => {
         it('should generate HTML with nonce', () => {
             const markdown = '# Test';
 
-            StandupCardProvider.createOrShow(mockExtensionUri, markdown);
+            StandupCardProvider.createOrShow(mockExtensionUri, markdown, mockContext);
 
             expect(mockPanel.webview.html).toContain('nonce-');
             expect(mockPanel.webview.html).toContain('test-nonce-12345678');
@@ -358,7 +381,7 @@ describe('StandupCardProvider', () => {
         it('should inject initial markdown', () => {
             const markdown = '# Test Standup\n\n- Item 1\n- Item 2';
 
-            StandupCardProvider.createOrShow(mockExtensionUri, markdown);
+            StandupCardProvider.createOrShow(mockExtensionUri, markdown, mockContext);
 
             expect(mockPanel.webview.html).toContain('window.initialMarkdown');
             expect(mockPanel.webview.html).toContain('# Test Standup');

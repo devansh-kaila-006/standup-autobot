@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { Icons } from './iconUtils';
 
 const SECRET_STORAGE_KEY = 'standup.autobot.apiKey';
 
@@ -21,7 +22,7 @@ export async function setApiKeyCommand(context: vscode.ExtensionContext) {
 
     if (input) {
         await context.secrets.store(SECRET_STORAGE_KEY, input);
-        vscode.window.showInformationMessage('API Key saved securely! 🛡️');
+        vscode.window.showInformationMessage(`API Key saved securely! ${Icons.shield()}`);
         return input;
     }
     return undefined;
@@ -45,7 +46,7 @@ export async function ensureApiKey(context: vscode.ExtensionContext): Promise<st
     }
 
     const choice = await vscode.window.showWarningMessage(
-        '⚠️ Standup Autobot needs an API Key to generate summaries.',
+        `${Icons.warning()} Standup Autobot needs an API Key to generate summaries.`,
         'Set API Key',
         'Cancel'
     );

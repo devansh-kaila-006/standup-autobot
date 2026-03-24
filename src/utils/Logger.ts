@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { StandupError } from './errors';
+import { Icons } from './iconUtils';
 
 export enum LogLevel {
     DEBUG = 0,
@@ -78,13 +79,29 @@ export class Logger {
     /**
      * Log error message
      */
-    error(message: string, error?: Error | StandupError, context?: any): void {
-        const errorContext = error ? {
-            name: error.name,
-            message: error.message,
-            code: error instanceof StandupError ? error.code : undefined,
-            stack: error.stack,
-        } : undefined;
+    error(message: string, error?: Error | StandupError | unknown, context?: any): void {
+        let errorContext;
+
+        if (error instanceof Error) {
+            errorContext = {
+                name: error.name,
+                message: error.message,
+                code: error instanceof StandupError ? error.code : undefined,
+                stack: error.stack,
+            };
+        } else if (error && typeof error === 'object') {
+            errorContext = {
+                name: (error as any).name || 'Unknown',
+                message: (error as any).message || String(error),
+                code: (error as any).code,
+                stack: (error as any).stack,
+            };
+        } else if (error !== undefined) {
+            errorContext = {
+                name: 'Unknown',
+                message: String(error),
+            };
+        }
 
         this.log(LogLevel.ERROR, message, { ...context, error: errorContext });
     }
@@ -182,10 +199,10 @@ export class Logger {
         const lines: string[] = ['# Standup Autobot Logs', ''];
 
         for (const entry of this.logBuffer) {
-            const icon = entry.level === LogLevel.ERROR ? '❌' :
-                        entry.level === LogLevel.WARN ? '⚠️' :
+            const icon = entry.level === LogLevel.ERROR ? Icons.xmark() :
+                        entry.level === LogLevel.WARN ? Icons.warning() :
                         entry.level === LogLevel.DEBUG ? '🔍' :
-                        'ℹ️';
+                        Icons.info();
 
             lines.push(`### ${icon} ${entry.levelName} - ${entry.timestamp}`);
             lines.push(entry.message);

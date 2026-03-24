@@ -12,6 +12,12 @@ import { ConfigManager } from './utils/ConfigManager';
 import { HistoryPanel } from './webviews/HistoryPanel';
 import { DataAuditPanel } from './webviews/DataAuditPanel';
 import { AnalyticsPanel } from './webviews/AnalyticsPanel';
+import { KeyboardShortcutManager } from './utils/KeyboardShortcutManager';
+import { I18nService } from './i18n/I18nService';
+import { UnifiedAIService } from './services/UnifiedAIService';
+import { JiraService } from './services/JiraService';
+import { SlackService } from './services/SlackService';
+import { TeamsService } from './services/TeamsService';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Standup Autobot is now active!');
@@ -21,10 +27,51 @@ export function activate(context: vscode.ExtensionContext) {
     const gitTracker = new GitTracker();
     const terminalTracker = new TerminalTracker();
     const standupGenerator = new StandupGenerator();
+    const unifiedAIService = new UnifiedAIService(context);
     const exporterService = new ExporterService();
     const historyService = new HistoryService(context);
+
+    // --- Phase 5: Initialize integration services ---
+    const jiraService = new JiraService(context);
+    const slackService = new SlackService(context);
+    const teamsService = new TeamsService(context);
+
+    // --- Phase 7: Initialize UX services ---
+    const i18nService = new I18nService(context);
+    const keyboardShortcutManager = new KeyboardShortcutManager();
     
     // --- 2. Register Commands ---
+
+    // Helper function to auto-post standup to integrations
+    const autoPostStandup = async (markdown: string): Promise<void> => {
+        const config = vscode.workspace.getConfiguration('standup');
+        const autoPostToSlack = config.get<boolean>('autoPostToSlack', false);
+        const autoPostToTeams = config.get<boolean>('autoPostToTeams', false);
+
+        if (autoPostToSlack) {
+            try {
+                const webhookUrl = await context.secrets.get('standup.slackWebhookUrl');
+                if (webhookUrl) {
+                    await slackService.postWebhook(markdown);
+                    vscode.window.showInformationMessage('Standup posted to Slack!');
+                }
+            } catch (error: any) {
+                vscode.window.showWarningMessage(`Failed to post to Slack: ${error.message}`);
+            }
+        }
+
+        if (autoPostToTeams) {
+            try {
+                const webhookUrl = await context.secrets.get('standup.teamsWebhookUrl');
+                if (webhookUrl) {
+                    await teamsService.sendMessage(markdown);
+                    vscode.window.showInformationMessage('Standup posted to Teams!');
+                }
+            } catch (error: any) {
+                vscode.window.showWarningMessage(`Failed to post to Teams: ${error.message}`);
+            }
+        }
+    };
 
     // Generate Daily
     const generateDisposable = vscode.commands.registerCommand('standup.generate', async () => {
@@ -42,22 +89,61 @@ export function activate(context: vscode.ExtensionContext) {
                 };
                 const markdown = await standupGenerator.generateStandup(dailyData, apiKey, config, durationHours);
                 context.globalState.update('standup.lastGenerated', markdown);
-                StandupCardProvider.createOrShow(context.extensionUri, markdown);
+                StandupCardProvider.createOrShow(context.extensionUri, markdown, context);
                 await historyService.saveStandup(markdown);
                 await historyService.logActivity(activityTracker.getFileCount());
+
+                // Auto-post to integrations if configured
+                await autoPostStandup(markdown);
             } catch (error: any) {
                 vscode.window.showErrorMessage(`Failed to generate standup: ${error.message}`);
             }
         });
     });
 
-    // View History
+    // Generate Standup (new command name for keyboard shortcuts)
+    const generateDisposable2 = vscode.commands.registerCommand('standup.generateStandup', async () => {
+        const config = ConfigManager.getConfig();
+        const durationHours = config.activityDuration;
+        const apiKey = await ensureApiKey(context);
+        if (!apiKey) return;
+
+        vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: "Gathering activity..." }, async () => {
+            try {
+                const dailyData = {
+                    topFiles: activityTracker.getTopFiles(5),
+                    commits: await gitTracker.getRecentCommits(durationHours),
+                    commands: await terminalTracker.getTerminalHistory(10)
+                };
+                const markdown = await standupGenerator.generateStandup(dailyData, apiKey, config, durationHours);
+                context.globalState.update('standup.lastGenerated', markdown);
+                StandupCardProvider.createOrShow(context.extensionUri, markdown, context);
+                await historyService.saveStandup(markdown);
+                await historyService.logActivity(activityTracker.getFileCount());
+
+                // Auto-post to integrations if configured
+                await autoPostStandup(markdown);
+            } catch (error: any) {
+                vscode.window.showErrorMessage(`Failed to generate standup: ${error.message}`);
+            }
+        });
+    });
+
+    // View History (alias for backwards compatibility)
     const historyDisposable = vscode.commands.registerCommand('standup.viewHistory', () => {
         HistoryPanel.createOrShow(context.extensionUri, context);
     });
 
-    // View Analytics Dashboard
+    const historyDisposable2 = vscode.commands.registerCommand('standup.showHistory', () => {
+        HistoryPanel.createOrShow(context.extensionUri, context);
+    });
+
+    // View Analytics Dashboard (alias for backwards compatibility)
     const analyticsDisposable = vscode.commands.registerCommand('standup.viewAnalytics', () => {
+        AnalyticsPanel.createOrShow(context.extensionUri, context);
+    });
+
+    const analyticsDisposable2 = vscode.commands.registerCommand('standup.showAnalytics', () => {
         AnalyticsPanel.createOrShow(context.extensionUri, context);
     });
 
@@ -78,7 +164,17 @@ export function activate(context: vscode.ExtensionContext) {
         };
         DataAuditPanel.createOrShow(context.extensionUri, data, () => {
             vscode.commands.executeCommand('standup.generate');
-        });
+        }, context);
+    });
+    const dataAuditDisposable2 = vscode.commands.registerCommand('standup.dataAudit', async () => {
+        const data = {
+            topFiles: activityTracker.getTopFiles(10),
+            commits: await gitTracker.getRecentCommits(24),
+            commands: await terminalTracker.getTerminalHistory(20)
+        };
+        DataAuditPanel.createOrShow(context.extensionUri, data, () => {
+            vscode.commands.executeCommand('standup.generate');
+        }, context);
     });
 
     // Weekly Digest
@@ -102,6 +198,14 @@ export function activate(context: vscode.ExtensionContext) {
 
     // API Keys
     const setApiKeyDisposable = vscode.commands.registerCommand('standup.setApiKey', () => setApiKeyCommand(context));
+    const setOpenaiApiKeyDisposable = vscode.commands.registerCommand('standup.setOpenaiApiKey', async () => {
+        const token = await vscode.window.showInputBox({ prompt: 'Enter OpenAI API Key', password: true });
+        if (token) await context.secrets.store('standup.openaiApiKey', token);
+    });
+    const setClaudeApiKeyDisposable = vscode.commands.registerCommand('standup.setClaudeApiKey', async () => {
+        const token = await vscode.window.showInputBox({ prompt: 'Enter Claude API Key', password: true });
+        if (token) await context.secrets.store('standup.claudeApiKey', token);
+    });
     const setNotionTokenDisposable = vscode.commands.registerCommand('standup.setNotionToken', async () => {
         const token = await vscode.window.showInputBox({ prompt: 'Enter Notion Token', password: true });
         if (token) await context.secrets.store('standup.notionToken', token);
@@ -134,17 +238,82 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.showInformationMessage(msg);
     });
 
+    // Copy to Clipboard
+    const copyToClipboardDisposable = vscode.commands.registerCommand('standup.copyToClipboard', async () => {
+        const lastMarkdown = context.globalState.get<string>('standup.lastGenerated');
+        if (lastMarkdown) {
+            await vscode.env.clipboard.writeText(lastMarkdown);
+            vscode.window.showInformationMessage('Copied to clipboard!');
+        }
+    });
+
+    // Export (opens export menu)
+    const exportDisposable = vscode.commands.registerCommand('standup.export', async () => {
+        // Quick export to clipboard for now, can be expanded to show menu
+        const lastMarkdown = context.globalState.get<string>('standup.lastGenerated');
+        if (lastMarkdown) {
+            await vscode.env.clipboard.writeText(lastMarkdown);
+            vscode.window.showInformationMessage('Exported to clipboard!');
+        }
+    });
+
+    // Configure Settings
+    const configureSettingsDisposable = vscode.commands.registerCommand('standup.configureSettings', async () => {
+        vscode.commands.executeCommand('workbench.action.openSettings', '@ext:standup-autobot.standup-autobot');
+    });
+
     const copyTeamsDisposable = vscode.commands.registerCommand('standup.copyForTeams', async (text: string) => {
         await vscode.env.clipboard.writeText(exporterService.formatForTeams(text));
         vscode.window.showInformationMessage('Copied!');
     });
     const sendEmailDisposable = vscode.commands.registerCommand('standup.sendEmail', (text: string) => exporterService.exportToEmail(text));
 
+    // Connection Test Commands
+    const testJiraConnectionDisposable = vscode.commands.registerCommand('standup.testJiraConnection', async () => {
+        try {
+            const result = await jiraService.testConnection();
+            if (result) {
+                vscode.window.showInformationMessage('Jira connection successful!');
+            } else {
+                vscode.window.showErrorMessage('Jira connection failed. Please check your settings.');
+            }
+        } catch (error: any) {
+            vscode.window.showErrorMessage(`Jira connection error: ${error.message}`);
+        }
+    });
+
+    const testGitHubConnectionDisposable = vscode.commands.registerCommand('standup.testGitHubConnection', async () => {
+        const token = await context.secrets.get('standup.githubToken');
+        if (!token) {
+            vscode.window.showWarningMessage('GitHub token not set. Please set it first.');
+            return;
+        }
+        vscode.window.showInformationMessage('GitHub connection test not yet implemented.');
+    });
+
+    const testSlackConnectionDisposable = vscode.commands.registerCommand('standup.testSlackConnection', async () => {
+        try {
+            const result = await slackService.testConnection();
+            if (result) {
+                vscode.window.showInformationMessage('Slack connection successful!');
+            } else {
+                vscode.window.showErrorMessage('Slack connection failed. Please check your settings.');
+            }
+        } catch (error: any) {
+            vscode.window.showErrorMessage(`Slack connection error: ${error.message}`);
+        }
+    });
+
     // Register all to subscriptions
     context.subscriptions.push(
-        activityTracker, generateDisposable, historyDisposable, toggleTrackingDisposable, 
-        previewDataDisposable, weeklyDigestDisposable, setApiKeyDisposable, setNotionTokenDisposable, 
-        setJiraTokenDisposable, exportToNotionDisposable, exportToJiraDisposable, copyTeamsDisposable, sendEmailDisposable
+        activityTracker, generateDisposable, generateDisposable2, historyDisposable, historyDisposable2,
+        analyticsDisposable, analyticsDisposable2, toggleTrackingDisposable,
+        previewDataDisposable, dataAuditDisposable2, weeklyDigestDisposable,
+        setApiKeyDisposable, setOpenaiApiKeyDisposable, setClaudeApiKeyDisposable, setNotionTokenDisposable, setJiraTokenDisposable,
+        exportToNotionDisposable, exportToJiraDisposable, copyTeamsDisposable, sendEmailDisposable,
+        copyToClipboardDisposable, exportDisposable, configureSettingsDisposable,
+        testJiraConnectionDisposable, testGitHubConnectionDisposable, testSlackConnectionDisposable,
+        i18nService, keyboardShortcutManager, unifiedAIService, jiraService, slackService, teamsService
     );
 
     // --- 3. Status Bar ---

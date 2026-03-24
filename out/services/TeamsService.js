@@ -247,14 +247,14 @@ class TeamsService {
                 text: `**Date:** ${new Date().toLocaleDateString()}`,
             },
             {
-                title: '✅ Completed Yesterday',
+                title: 'Completed Yesterday',
                 facts: standupData.yesterday.map(item => ({
                     title: '•',
                     value: item,
                 })),
             },
             {
-                title: '🎯 Working on Today',
+                title: 'Working on Today',
                 facts: standupData.today.map(item => ({
                     title: '•',
                     value: item,
@@ -274,7 +274,7 @@ class TeamsService {
         // Add goals if any
         if (standupData.goals && standupData.goals.length > 0) {
             sections.push({
-                title: '🎯 Goals',
+                title: 'Goals',
                 facts: standupData.goals.map(goal => ({
                     title: '•',
                     value: goal,

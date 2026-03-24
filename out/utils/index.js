@@ -4,7 +4,7 @@
  * Provides clean imports for all utilities
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.KeyboardShortcutManager = exports.hashActivityData = exports.generateStandupCacheKey = exports.geminiAPICache = exports.APICache = exports.globalPerformanceMonitor = exports.MeasurePerformance = exports.PerformanceMonitor = exports.rateLimit = exports.createRateLimiter = exports.Throttle = exports.throttle = exports.Debounce = exports.debounce = exports.getNonce = exports.isIgnored = exports.ensureApiKey = exports.setApiKey = exports.TrackingError = exports.ConfigurationError = exports.APIError = exports.StandupError = exports.Diagnostics = exports.Logger = exports.ConfigValidator = exports.ConfigManager = exports.ActivityAnalyzer = void 0;
+exports.Icons = exports.SVGIcons = exports.KeyboardShortcutManager = exports.hashActivityData = exports.generateStandupCacheKey = exports.geminiAPICache = exports.APICache = exports.globalPerformanceMonitor = exports.MeasurePerformance = exports.PerformanceMonitor = exports.rateLimit = exports.createRateLimiter = exports.Throttle = exports.throttle = exports.Debounce = exports.debounce = exports.getNonce = exports.isIgnored = exports.ensureApiKey = exports.setApiKeyCommand = exports.TrackingError = exports.ConfigurationError = exports.APIError = exports.StandupError = exports.Diagnostics = exports.Logger = exports.ConfigValidator = exports.ConfigManager = exports.ActivityAnalyzer = void 0;
 var ActivityAnalyzer_1 = require("./ActivityAnalyzer");
 Object.defineProperty(exports, "ActivityAnalyzer", { enumerable: true, get: function () { return ActivityAnalyzer_1.ActivityAnalyzer; } });
 var ConfigManager_1 = require("./ConfigManager");
@@ -21,7 +21,7 @@ Object.defineProperty(exports, "APIError", { enumerable: true, get: function () 
 Object.defineProperty(exports, "ConfigurationError", { enumerable: true, get: function () { return errors_1.ConfigurationError; } });
 Object.defineProperty(exports, "TrackingError", { enumerable: true, get: function () { return errors_1.TrackingError; } });
 var auth_1 = require("./auth");
-Object.defineProperty(exports, "setApiKey", { enumerable: true, get: function () { return auth_1.setApiKey; } });
+Object.defineProperty(exports, "setApiKeyCommand", { enumerable: true, get: function () { return auth_1.setApiKeyCommand; } });
 Object.defineProperty(exports, "ensureApiKey", { enumerable: true, get: function () { return auth_1.ensureApiKey; } });
 var ignore_1 = require("./ignore");
 Object.defineProperty(exports, "isIgnored", { enumerable: true, get: function () { return ignore_1.isIgnored; } });
@@ -46,4 +46,7 @@ Object.defineProperty(exports, "generateStandupCacheKey", { enumerable: true, ge
 Object.defineProperty(exports, "hashActivityData", { enumerable: true, get: function () { return apiCache_1.hashActivityData; } });
 var KeyboardShortcutManager_1 = require("./KeyboardShortcutManager");
 Object.defineProperty(exports, "KeyboardShortcutManager", { enumerable: true, get: function () { return KeyboardShortcutManager_1.KeyboardShortcutManager; } });
+var iconUtils_1 = require("./iconUtils");
+Object.defineProperty(exports, "SVGIcons", { enumerable: true, get: function () { return iconUtils_1.SVGIcons; } });
+Object.defineProperty(exports, "Icons", { enumerable: true, get: function () { return iconUtils_1.Icons; } });
 //# sourceMappingURL=index.js.map

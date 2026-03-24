@@ -37,6 +37,7 @@ exports.setApiKeyCommand = setApiKeyCommand;
 exports.getApiKey = getApiKey;
 exports.ensureApiKey = ensureApiKey;
 const vscode = __importStar(require("vscode"));
+const iconUtils_1 = require("./iconUtils");
 const SECRET_STORAGE_KEY = 'standup.autobot.apiKey';
 /**
  * Prompts the user for an API key and saves it to SecretStorage.
@@ -56,7 +57,7 @@ async function setApiKeyCommand(context) {
     });
     if (input) {
         await context.secrets.store(SECRET_STORAGE_KEY, input);
-        vscode.window.showInformationMessage('API Key saved securely! 🛡️');
+        vscode.window.showInformationMessage(`API Key saved securely! ${iconUtils_1.Icons.shield()}`);
         return input;
     }
     return undefined;
@@ -75,7 +76,7 @@ async function ensureApiKey(context) {
     if (key) {
         return key;
     }
-    const choice = await vscode.window.showWarningMessage('⚠️ Standup Autobot needs an API Key to generate summaries.', 'Set API Key', 'Cancel');
+    const choice = await vscode.window.showWarningMessage(`${iconUtils_1.Icons.warning()} Standup Autobot needs an API Key to generate summaries.`, 'Set API Key', 'Cancel');
     if (choice === 'Set API Key') {
         return await setApiKeyCommand(context);
     }

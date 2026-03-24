@@ -52,7 +52,9 @@ class I18nService {
         this.disposables = [];
         this.currentLocale = this.detectLocale();
         this.loadTranslations();
-        this.setupLocaleListener();
+        if (this.context) {
+            this.setupLocaleListener();
+        }
     }
     /**
      * Detect user's locale
@@ -186,7 +188,9 @@ class I18nService {
             throw new Error(`Unsupported locale: ${locale}`);
         }
         this.currentLocale = locale;
-        await this.context.globalState.update('locale', locale);
+        if (this.context) {
+            await this.context.globalState.update('locale', locale);
+        }
     }
     /**
      * Translate a key

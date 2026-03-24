@@ -132,7 +132,7 @@ class SlackService {
                 type: 'section',
                 text: {
                     type: 'mrkdwn',
-                    text: '*✅ Completed Yesterday*',
+                    text: '*Completed Yesterday*',
                 },
             },
         ];
@@ -161,7 +161,7 @@ class SlackService {
             type: 'section',
             text: {
                 type: 'mrkdwn',
-                text: '*🎯 Working on Today*',
+                text: '*Working on Today*',
             },
         });
         // Add today's items
@@ -210,7 +210,7 @@ class SlackService {
                 type: 'section',
                 text: {
                     type: 'mrkdwn',
-                    text: '*🎯 Goals*',
+                    text: '*Goals*',
                 },
             });
             blocks.push({

@@ -45,6 +45,7 @@ export interface StandupSettings {
 import { ActivityAnalyzer, ActivityAnalysis } from '../utils/ActivityAnalyzer';
 import { geminiAPICache, generateStandupCacheKey, hashActivityData } from '../utils/apiCache';
 import { globalPerformanceMonitor } from '../utils/performanceMonitor';
+import { Icons } from '../utils/iconUtils';
 
 /**
  * Service class to generate daily standups using Gemini AI
@@ -191,8 +192,8 @@ export class StandupGenerator {
       blockersStr = analysis.blockers.map(b => `- ${b}`).join('\n');
     }
 
-    const confidenceNote = analysis.isLowConfidence 
-      ? `\n⚠️ NOTE: This summary has low confidence because: ${analysis.confidenceReason}\n` 
+    const confidenceNote = analysis.isLowConfidence
+      ? `\n${Icons.warning()} NOTE: This summary has low confidence because: ${analysis.confidenceReason}\n`
       : '';
 
     return `

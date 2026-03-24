@@ -119,6 +119,152 @@
           "minimum": 1,
           "maximum": 30,
           "description": "Number of days between automatic cleanup runs"
+        },
+        "standup.aiProvider": {
+          "type": "string",
+          "enum": ["gemini", "openai", "claude", "local"],
+          "default": "gemini",
+          "description": "AI provider for standup generation"
+        },
+        "standup.fallbackProvider": {
+          "type": "string",
+          "enum": ["gemini", "openai", "claude", "local"],
+          "default": "local",
+          "description": "Fallback AI provider if primary fails"
+        },
+        "standup.openaiModel": {
+          "type": "string",
+          "default": "gpt-4",
+          "description": "OpenAI model to use"
+        },
+        "standup.openaiTemperature": {
+          "type": "number",
+          "default": 0.7,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "OpenAI temperature (0.0-1.0)"
+        },
+        "standup.openaiMaxTokens": {
+          "type": "integer",
+          "default": 1000,
+          "description": "OpenAI max tokens"
+        },
+        "standup.claudeModel": {
+          "type": "string",
+          "default": "claude-3-5-sonnet-20241022",
+          "description": "Anthropic Claude model to use"
+        },
+        "standup.claudeTemperature": {
+          "type": "number",
+          "default": 0.7,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Claude temperature (0.0-1.0)"
+        },
+        "standup.claudeMaxTokens": {
+          "type": "integer",
+          "default": 1000,
+          "description": "Claude max tokens"
+        },
+        "standup.localLlmBaseUrl": {
+          "type": "string",
+          "default": "http://localhost:11434",
+          "description": "Ollama base URL for local LLM"
+        },
+        "standup.localLlmModel": {
+          "type": "string",
+          "default": "llama2",
+          "description": "Local LLM model to use"
+        },
+        "standup.locale": {
+          "type": "string",
+          "enum": ["en", "es", "fr", "de", "ja", "zh-CN", "zh-TW", "pt-BR", "ru", "ar"],
+          "default": "en",
+          "description": "Interface language"
+        },
+        "standup.jiraDomain": {
+          "type": "string",
+          "description": "Jira domain (e.g., company.atlassian.net)"
+        },
+        "standup.jiraProjectKey": {
+          "type": "string",
+          "description": "Default Jira project key"
+        },
+        "standup.azureOrganization": {
+          "type": "string",
+          "description": "Azure DevOps organization"
+        },
+        "standup.azureProject": {
+          "type": "string",
+          "description": "Azure DevOps project"
+        },
+        "standup.slackWebhookUrl": {
+          "type": "string",
+          "description": "Slack webhook URL"
+        },
+        "standup.teamsWebhookUrl": {
+          "type": "string",
+          "description": "Microsoft Teams webhook URL"
+        },
+        "standup.togglWorkspaceId": {
+          "type": "string",
+          "description": "Toggl workspace ID"
+        },
+        "standup.harvestAccountId": {
+          "type": "string",
+          "description": "Harvest account ID"
+        },
+        "standup.autoPostToSlack": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically post standups to Slack"
+        },
+        "standup.autoPostToTeams": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically post standups to Teams"
+        },
+        "standup.jiraDomain": {
+          "type": "string",
+          "description": "Jira domain (e.g., company.atlassian.net)"
+        },
+        "standup.jiraProjectKey": {
+          "type": "string",
+          "description": "Default Jira project key"
+        },
+        "standup.azureOrganization": {
+          "type": "string",
+          "description": "Azure DevOps organization"
+        },
+        "standup.azureProject": {
+          "type": "string",
+          "description": "Azure DevOps project"
+        },
+        "standup.slackWebhookUrl": {
+          "type": "string",
+          "description": "Slack webhook URL"
+        },
+        "standup.teamsWebhookUrl": {
+          "type": "string",
+          "description": "Microsoft Teams webhook URL"
+        },
+        "standup.togglWorkspaceId": {
+          "type": "string",
+          "description": "Toggl workspace ID"
+        },
+        "standup.harvestAccountId": {
+          "type": "string",
+          "description": "Harvest account ID"
+        },
+        "standup.autoPostToSlack": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically post standups to Slack"
+        },
+        "standup.autoPostToTeams": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically post standups to Teams"
         }
       }
     },
@@ -166,6 +312,105 @@
       {
         "command": "standup.generateWeeklyDigest",
         "title": "Standup: Generate Weekly Digest"
+      },
+      {
+        "command": "standup.generateStandup",
+        "title": "Standup: Generate Standup"
+      },
+      {
+        "command": "standup.copyToClipboard",
+        "title": "Standup: Copy to Clipboard"
+      },
+      {
+        "command": "standup.export",
+        "title": "Standup: Export"
+      },
+      {
+        "command": "standup.showHistory",
+        "title": "Standup: Show History"
+      },
+      {
+        "command": "standup.showAnalytics",
+        "title": "Standup: Show Analytics"
+      },
+      {
+        "command": "standup.dataAudit",
+        "title": "Standup: Data Audit"
+      },
+      {
+        "command": "standup.showNotifications",
+        "title": "Standup: Show Notifications"
+      },
+      {
+        "command": "standup.markNotificationsRead",
+        "title": "Standup: Mark All Notifications Read"
+      },
+      {
+        "command": "standup.configureSettings",
+        "title": "Standup: Configure Settings"
+      },
+      {
+        "command": "standup.testJiraConnection",
+        "title": "Standup: Test Jira Connection"
+      },
+      {
+        "command": "standup.testGitHubConnection",
+        "title": "Standup: Test GitHub Connection"
+      },
+      {
+        "command": "standup.testSlackConnection",
+        "title": "Standup: Test Slack Connection"
+      },
+      {
+        "command": "standup.setOpenaiApiKey",
+        "title": "Standup: Set OpenAI API Key"
+      },
+      {
+        "command": "standup.setClaudeApiKey",
+        "title": "Standup: Set Claude API Key"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "standup.generateStandup",
+        "key": "ctrl+alt+s",
+        "mac": "cmd+alt+s",
+        "when": "!standup.paused"
+      },
+      {
+        "command": "standup.copyToClipboard",
+        "key": "ctrl+alt+c",
+        "mac": "cmd+alt+c"
+      },
+      {
+        "command": "standup.export",
+        "key": "ctrl+alt+e",
+        "mac": "cmd+alt+e"
+      },
+      {
+        "command": "standup.showHistory",
+        "key": "ctrl+alt+h",
+        "mac": "cmd+alt+h"
+      },
+      {
+        "command": "standup.showAnalytics",
+        "key": "ctrl+alt+a",
+        "mac": "cmd+alt+a"
+      },
+      {
+        "command": "standup.dataAudit",
+        "key": "ctrl+alt+d",
+        "mac": "cmd+alt+d"
+      },
+      {
+        "command": "standup.showNotifications",
+        "key": "ctrl+alt+n",
+        "mac": "cmd+alt+n"
+      },
+      {
+        "command": "standup.configureSettings",
+        "key": "ctrl+alt+,",
+        "mac": "cmd+alt+,"
       }
     ]
   },

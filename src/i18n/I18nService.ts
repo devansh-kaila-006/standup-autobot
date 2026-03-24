@@ -29,10 +29,12 @@ export class I18nService {
     private translations: Map<LocaleCode, LocaleData> = new Map();
     private disposables: vscode.Disposable[] = [];
 
-    constructor(private context: vscode.ExtensionContext) {
+    constructor(private context?: vscode.ExtensionContext) {
         this.currentLocale = this.detectLocale();
         this.loadTranslations();
-        this.setupLocaleListener();
+        if (this.context) {
+            this.setupLocaleListener();
+        }
     }
 
     /**
@@ -185,7 +187,9 @@ export class I18nService {
         }
 
         this.currentLocale = locale;
-        await this.context.globalState.update('locale', locale);
+        if (this.context) {
+            await this.context.globalState.update('locale', locale);
+        }
     }
 
     /**

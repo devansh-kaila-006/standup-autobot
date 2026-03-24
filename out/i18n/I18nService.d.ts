@@ -22,11 +22,11 @@ export interface TranslationEntry {
 }
 export type LocaleCode = 'en' | 'es' | 'fr' | 'de' | 'ja' | 'zh-CN' | 'zh-TW' | 'pt-BR' | 'ru' | 'ar';
 export declare class I18nService {
-    private context;
+    private context?;
     private currentLocale;
     private translations;
     private disposables;
-    constructor(context: vscode.ExtensionContext);
+    constructor(context?: vscode.ExtensionContext | undefined);
     /**
      * Detect user's locale
      */

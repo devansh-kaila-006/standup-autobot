@@ -405,4 +405,11 @@ export class KeyboardShortcutManager {
             byCategory,
         };
     }
+
+    /**
+     * Dispose of resources
+     */
+    public dispose(): void {
+        // Clean up if needed
+    }
 }

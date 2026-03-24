@@ -35,6 +35,7 @@ export interface SlackBlock {
     };
     fields?: SlackField[];
     accessory?: SlackAccessory;
+    elements?: SlackAccessory[];
 }
 export interface SlackField {
     type: string;

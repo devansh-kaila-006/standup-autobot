@@ -13,6 +13,7 @@
 import * as vscode from 'vscode';
 import * as https from 'https';
 import { Logger } from '../utils/Logger';
+import { Icons } from '../utils/iconUtils';
 
 const logger = new Logger('SlackService');
 
@@ -188,7 +189,7 @@ export class SlackService {
                 type: 'section',
                 text: {
                     type: 'mrkdwn',
-                    text: '*✅ Completed Yesterday*',
+                    text: '*Completed Yesterday*',
                 },
             },
         ];
@@ -220,7 +221,7 @@ export class SlackService {
                 type: 'section',
                 text: {
                     type: 'mrkdwn',
-                    text: '*🎯 Working on Today*',
+                    text: '*Working on Today*',
                 },
             }
         );
@@ -278,7 +279,7 @@ export class SlackService {
                     type: 'section',
                     text: {
                         type: 'mrkdwn',
-                        text: '*🎯 Goals*',
+                        text: '*Goals*',
                     },
                 }
             );

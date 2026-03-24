@@ -4,6 +4,7 @@ exports.StandupGenerator = void 0;
 const ActivityAnalyzer_1 = require("../utils/ActivityAnalyzer");
 const apiCache_1 = require("../utils/apiCache");
 const performanceMonitor_1 = require("../utils/performanceMonitor");
+const iconUtils_1 = require("../utils/iconUtils");
 /**
  * Service class to generate daily standups using Gemini AI
  */
@@ -119,7 +120,7 @@ class StandupGenerator {
             blockersStr = analysis.blockers.map(b => `- ${b}`).join('\n');
         }
         const confidenceNote = analysis.isLowConfidence
-            ? `\n⚠️ NOTE: This summary has low confidence because: ${analysis.confidenceReason}\n`
+            ? `\n${iconUtils_1.Icons.warning()} NOTE: This summary has low confidence because: ${analysis.confidenceReason}\n`
             : '';
         return `
 You are a senior developer's productivity assistant. Synthesize the following raw VS Code activity logs into a Daily Standup update for Slack.

@@ -248,11 +248,15 @@ class AccessibilityManager {
      * Check if screen reader is active
      */
     isScreenReaderActive() {
-        // Check for common screen reader indicators
-        return (window.navigator.userAgent.includes('JAWS') ||
-            window.navigator.userAgent.includes('NVDA') ||
-            window.navigator.userAgent.includes('VOICEOVER') ||
-            window.speechSynthesis !== undefined);
+        // Check for common screen reader indicators (only in browser context)
+        if (typeof globalThis.window !== 'undefined' && globalThis.window?.navigator) {
+            const win = globalThis.window;
+            return (win.navigator.userAgent.includes('JAWS') ||
+                win.navigator.userAgent.includes('NVDA') ||
+                win.navigator.userAgent.includes('VOICEOVER') ||
+                win.speechSynthesis !== undefined);
+        }
+        return false;
     }
     /**
      * Get focus visible styles

@@ -10,6 +10,9 @@ export declare class AnalyticsPanel {
     private readonly _panel;
     private _disposables;
     private analyticsService;
+    private themeManager;
+    private accessibilityManager;
+    private i18nService;
     static createOrShow(extensionUri: vscode.Uri, context: vscode.ExtensionContext): void;
     private constructor();
     private _update;

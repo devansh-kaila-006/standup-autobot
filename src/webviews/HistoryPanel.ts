@@ -1,5 +1,8 @@
 import * as vscode from 'vscode';
 import { HistoryService } from '../services/HistoryService';
+import { ThemeManager } from './ThemeManager';
+import { AccessibilityManager } from './AccessibilityManager';
+import { I18nService } from '../i18n/I18nService';
 
 export class HistoryPanel {
     public static currentPanel: HistoryPanel | undefined;
@@ -7,6 +10,9 @@ export class HistoryPanel {
     private _disposables: vscode.Disposable[] = [];
     private _extensionUri: vscode.Uri;
     private _context: vscode.ExtensionContext;
+    private themeManager: ThemeManager;
+    private accessibilityManager: AccessibilityManager;
+    private i18nService: I18nService;
 
     // Lazy loading state
     private readonly PAGE_SIZE = 20;
@@ -41,6 +47,11 @@ export class HistoryPanel {
         this._panel = panel;
         this._extensionUri = extensionUri;
         this._context = context;
+
+        // Initialize Phase 7 services
+        this.themeManager = new ThemeManager();
+        this.accessibilityManager = new AccessibilityManager();
+        this.i18nService = new I18nService(context);
 
         // Load initial page only
         this._updateInitial();
@@ -177,11 +188,14 @@ export class HistoryPanel {
         hasMoreHistory: boolean = false,
         hasMoreActivity: boolean = false
     ) {
-        const nonce = getNonce();
+        const nonce = this.themeManager.getNonce();
+        const themeCSS = this.themeManager.getThemeCSS();
+        const focusCSS = this.accessibilityManager.getFocusVisibleCSS();
+        const direction = this.i18nService.getTextDirection();
 
         return `
             <!DOCTYPE html>
-            <html lang="en">
+            <html lang="${this.i18nService.getLocale()}" dir="${direction}">
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -195,50 +209,129 @@ export class HistoryPanel {
                     const vscode = acquireVsCodeApi();
                 </script>
                 <style>
-                    :root {
-                        --bg: #1e1e1e;
-                        --card-bg: #252526;
-                        --border: #3e3e42;
-                        --accent: #007acc;
-                        --text: #cccccc;
-                        --text-bright: #ffffff;
+                    ${themeCSS}
+                    ${focusCSS}
+
+                    /* History-specific styles */
+                    .container {
+                        max-width: 800px;
+                        margin: 0 auto;
                     }
-                    body {
-                        background-color: var(--bg);
-                        color: var(--text);
-                        font-family: 'Segoe UI', sans-serif;
-                        padding: 20px;
-                        margin: 0;
+
+                    h1 {
+                        margin-bottom: var(--spacing-md);
                     }
-                    .container { max-width: 800px; margin: 0 auto; }
-                    h1 { color: var(--text-bright); font-size: 1.5rem; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
-                    
+
                     /* Heatmap */
-                    .heatmap-section { background: var(--card-bg); padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 1px solid var(--border); }
-                    .heatmap-title { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; opacity: 0.8; }
-                    .heatmap-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; }
-                    .day-cell { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-                    .square { width: 40px; height: 40px; border-radius: 4px; transition: transform 0.2s; border: 1px solid rgba(255,255,255,0.05); }
-                    .square:hover { transform: scale(1.1); filter: brightness(1.2); }
-                    .day-label { font-size: 0.75rem; opacity: 0.7; }
+                    .heatmap-section {
+                        margin-bottom: var(--spacing-lg);
+                    }
+
+                    .heatmap-title {
+                        font-size: 0.875rem;
+                        text-transform: uppercase;
+                        letter-spacing: 1px;
+                        margin-bottom: var(--spacing-md);
+                        opacity: 0.8;
+                        font-weight: 600;
+                    }
+
+                    .heatmap-grid {
+                        display: grid;
+                        grid-template-columns: repeat(7, 1fr);
+                        gap: var(--spacing-sm);
+                    }
+
+                    .day-cell {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: var(--spacing-xs);
+                    }
+
+                    .square {
+                        width: 40px;
+                        height: 40px;
+                        border-radius: var(--border-radius-sm);
+                        transition: transform 0.2s;
+                        border: 1px solid var(--border-color);
+                    }
+
+                    .square:hover {
+                        transform: scale(1.1);
+                        filter: brightness(1.2);
+                    }
+
+                    .square:focus {
+                        outline: 2px solid var(--primary-color);
+                        outline-offset: 2px;
+                    }
+
+                    .day-label {
+                        font-size: 0.75rem;
+                        opacity: 0.7;
+                    }
 
                     /* History List */
-                    .history-item { background: var(--card-bg); padding: 16px; border-radius: 8px; margin-bottom: 16px; border-left: 4px solid var(--accent); box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: transform 0.2s; }
-                    .history-item:hover { transform: translateX(5px); }
-                    .item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-                    .date { font-weight: bold; color: var(--accent); font-size: 0.9rem; }
-                    .copy-btn { background: #3e3e42; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; }
-                    .copy-btn:hover { background: #505055; }
-                    .content { font-size: 0.9rem; line-height: 1.5; white-space: pre-wrap; color: #e0e0e0; }
+                    .history-list {
+                        margin-top: var(--spacing-lg);
+                    }
+
+                    .history-item {
+                        margin-bottom: var(--spacing-md);
+                    }
+
+                    .item-header {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        margin-bottom: var(--spacing-sm);
+                    }
+
+                    .date {
+                        font-weight: 600;
+                        color: var(--primary-color);
+                        font-size: 0.875rem;
+                    }
+
+                    .copy-btn {
+                        font-size: 0.75rem;
+                    }
+
+                    .content {
+                        font-size: 0.875rem;
+                        line-height: 1.5;
+                        white-space: pre-wrap;
+                        color: var(--text-secondary-color);
+                    }
+
+                    .load-more-btn {
+                        margin-top: var(--spacing-md);
+                        width: 100%;
+                    }
+
+                    /* Empty state */
+                    .empty-state {
+                        text-align: center;
+                        padding: var(--spacing-xl);
+                        opacity: 0.5;
+                        font-style: italic;
+                    }
                 </style>
             </head>
             <body>
-                <div id="root"></div>
+                ${this.accessibilityManager.generateSkipLink('#root', 'Skip to content')}
+                <div id="root" role="main"></div>
                 <script type="text/babel" nonce="${nonce}">
                     const { useState, useEffect } = React;
 
+                    const translations = ${JSON.stringify(this.getTranslations())};
+                    const locale = "${this.i18nService.getLocale()}";
+
                     const historyData = ${JSON.stringify(history)};
                     const activityData = ${JSON.stringify(activity)};
+
+                    const t = (key) => translations[key] || key;
 
                     const Heatmap = ({ data }) => {
                         const today = new Date();
@@ -249,28 +342,30 @@ export class HistoryPanel {
                             const d = new Date();
                             d.setDate(today.getDate() - i);
                             const dateStr = d.toISOString().split('T')[0];
-                            const label = d.toLocaleDateString('en-US', { weekday: 'short' });
+                            const label = d.toLocaleDateString(locale, { weekday: 'short' });
                             const count = activityMap.get(dateStr) || 0;
                             days.push({ label, count, date: dateStr });
                         }
 
                         const getColor = (count) => {
-                            if (count === 0) return '#333333';
-                            if (count <= 5) return '#4ade80';
-                            if (count <= 15) return '#22c55e';
-                            return '#15803d';
+                            if (count === 0) return 'var(--card-color)';
+                            if (count <= 5) return 'var(--success-color)';
+                            if (count <= 15) return 'var(--success-color)';
+                            return 'var(--success-color)';
                         };
 
                         return (
-                            <div className="heatmap-section">
-                                <div className="heatmap-title">7-Day Productivity (Files Touched)</div>
-                                <div className="heatmap-grid">
+                            <div className="card heatmap-section" role="region" aria-label={t('analytics.title')}>
+                                <h2 className="heatmap-title">{t('analytics.productivity')}</h2>
+                                <div className="heatmap-grid" role="list" aria-label="7-day activity overview">
                                     {days.map(day => (
-                                        <div className="day-cell" key={day.date}>
-                                            <div 
-                                                className="square" 
+                                        <div className="day-cell" key={day.date} role="listitem">
+                                            <div
+                                                className="square"
                                                 style={{ backgroundColor: getColor(day.count) }}
-                                                title={day.count + " files on " + day.date}
+                                                title={day.count + " " + t('analytics.files') + " " + day.date}
+                                                tabIndex={0}
+                                                aria-label={day.count + " " + t('analytics.files') + " " + day.date}
                                             />
                                             <span className="day-label">{day.label}</span>
                                         </div>
@@ -282,42 +377,44 @@ export class HistoryPanel {
 
                     const HistoryApp = () => {
                         const vscode = acquireVsCodeApi();
-                        
+
                         const handleCopy = (text) => {
                             vscode.postMessage({ command: 'copyToClipboard', text });
                         };
 
                         return (
                             <div className="container">
-                                <h1>History & Trends</h1>
+                                <h1>{t('history.title')}</h1>
                                 <Heatmap data={activityData} />
-                                
+
                                 <div className="history-list">
-                                    <div className="heatmap-title">Past standups</div>
-                                    {historyData.length === 0 && <div style={{opacity: 0.5, fontStyle: 'italic'}}>No history found yet.</div>}
+                                    <h2 className="heatmap-title">{t('history.pastStandups')}</h2>
+                                    {historyData.length === 0 && <div className="empty-state" role="status">{t('history.noEntries')}</div>}
                                     {historyData.map(item => (
-                                        <div className="history-item" key={item.id}>
+                                        <div className="card history-item" key={item.id}>
                                             <div className="item-header">
-                                                <span className="date">{new Date(item.timestamp).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                                                <button className="copy-btn" onClick={() => handleCopy(item.text)}>Copy</button>
+                                                <time className="date" dateTime={new Date(item.timestamp).toISOString()}>
+                                                    {new Date(item.timestamp).toLocaleDateString(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                                </time>
+                                                <button
+                                                    className="copy-btn"
+                                                    onClick={() => handleCopy(item.text)}
+                                                    aria-label={t('standup.copied')}
+                                                >
+                                                    {t('common.copy')}
+                                                </button>
                                             </div>
                                             <div className="content">{item.text}</div>
                                         </div>
                                     ))}
                                     ${hasMoreHistory ? `
-                                    <div style={{textAlign: 'center', marginTop: '20px'}}>
+                                    <div style={{textAlign: 'center', marginTop: 'var(--spacing-md)'}}>
                                         <button
+                                            className="load-more-btn"
                                             onClick={() => vscode.postMessage({command: 'loadMoreHistory'})}
-                                            style={{
-                                                padding: '10px 20px',
-                                                background: '#007acc',
-                                                color: 'white',
-                                                border: 'none',
-                                                borderRadius: '4px',
-                                                cursor: 'pointer'
-                                            }}
+                                            aria-label={t('history.loadMore')}
                                         >
-                                            Load More History
+                                            {t('history.loadMore')}
                                         </button>
                                     </div>
                                     ` : ''}
@@ -334,7 +431,27 @@ export class HistoryPanel {
         `;
     }
 
+    /**
+     * Get translations for webview
+     */
+    private getTranslations(): Record<string, string> {
+        return {
+            'history.title': this.i18nService.t('history.title'),
+            'history.noEntries': this.i18nService.t('history.noEntries'),
+            'history.pastStandups': 'Past standups',
+            'history.loadMore': 'Load More',
+            'analytics.title': 'Productivity',
+            'analytics.productivity': '7-Day Productivity (Files Touched)',
+            'analytics.files': 'files',
+            'common.copy': 'Copy',
+            'standup.copied': 'Copy to clipboard',
+        };
+    }
+
     public dispose() {
+        this.themeManager.dispose();
+        this.accessibilityManager.dispose();
+        this.i18nService.dispose();
         HistoryPanel.currentPanel = undefined;
         this._panel.dispose();
         while (this._disposables.length) {

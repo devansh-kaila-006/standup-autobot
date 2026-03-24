@@ -52,7 +52,7 @@ export declare class Logger {
     /**
      * Log error message
      */
-    error(message: string, error?: Error | StandupError, context?: any): void;
+    error(message: string, error?: Error | StandupError | unknown, context?: any): void;
     /**
      * Internal logging method
      */
