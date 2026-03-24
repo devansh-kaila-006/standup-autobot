@@ -4,7 +4,7 @@
  * Provides clean imports for all utilities
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.hashActivityData = exports.generateStandupCacheKey = exports.geminiAPICache = exports.APICache = exports.globalPerformanceMonitor = exports.MeasurePerformance = exports.PerformanceMonitor = exports.rateLimit = exports.createRateLimiter = exports.Throttle = exports.throttle = exports.Debounce = exports.debounce = exports.getNonce = exports.isIgnored = exports.ensureApiKey = exports.setApiKey = exports.TrackingError = exports.ConfigurationError = exports.APIError = exports.StandupError = exports.Diagnostics = exports.Logger = exports.ConfigValidator = exports.ConfigManager = exports.ActivityAnalyzer = void 0;
+exports.KeyboardShortcutManager = exports.hashActivityData = exports.generateStandupCacheKey = exports.geminiAPICache = exports.APICache = exports.globalPerformanceMonitor = exports.MeasurePerformance = exports.PerformanceMonitor = exports.rateLimit = exports.createRateLimiter = exports.Throttle = exports.throttle = exports.Debounce = exports.debounce = exports.getNonce = exports.isIgnored = exports.ensureApiKey = exports.setApiKey = exports.TrackingError = exports.ConfigurationError = exports.APIError = exports.StandupError = exports.Diagnostics = exports.Logger = exports.ConfigValidator = exports.ConfigManager = exports.ActivityAnalyzer = void 0;
 var ActivityAnalyzer_1 = require("./ActivityAnalyzer");
 Object.defineProperty(exports, "ActivityAnalyzer", { enumerable: true, get: function () { return ActivityAnalyzer_1.ActivityAnalyzer; } });
 var ConfigManager_1 = require("./ConfigManager");
@@ -44,4 +44,6 @@ Object.defineProperty(exports, "APICache", { enumerable: true, get: function () 
 Object.defineProperty(exports, "geminiAPICache", { enumerable: true, get: function () { return apiCache_1.geminiAPICache; } });
 Object.defineProperty(exports, "generateStandupCacheKey", { enumerable: true, get: function () { return apiCache_1.generateStandupCacheKey; } });
 Object.defineProperty(exports, "hashActivityData", { enumerable: true, get: function () { return apiCache_1.hashActivityData; } });
+var KeyboardShortcutManager_1 = require("./KeyboardShortcutManager");
+Object.defineProperty(exports, "KeyboardShortcutManager", { enumerable: true, get: function () { return KeyboardShortcutManager_1.KeyboardShortcutManager; } });
 //# sourceMappingURL=index.js.map

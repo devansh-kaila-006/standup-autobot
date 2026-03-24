@@ -4,7 +4,7 @@
  * Provides clean imports for all services
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.HarvestService = exports.TogglService = exports.TeamsService = exports.SlackService = exports.AzureDevOpsService = exports.GitHubService = exports.JiraService = exports.ConfigManager = exports.StandupGenerator = exports.SmartFeaturesService = exports.MemoryManager = exports.HistoryService = exports.ExporterService = exports.EnhancedExporterService = exports.DigestService = exports.AnalyticsService = void 0;
+exports.SmartNotificationsService = exports.WorkflowAutomationService = exports.AIInsightsService = exports.LocalLLMService = exports.ClaudeService = exports.OpenAIService = exports.HarvestService = exports.TogglService = exports.TeamsService = exports.SlackService = exports.AzureDevOpsService = exports.GitHubService = exports.JiraService = exports.ConfigManager = exports.StandupGenerator = exports.SmartFeaturesService = exports.MemoryManager = exports.HistoryService = exports.ExporterService = exports.EnhancedExporterService = exports.DigestService = exports.AnalyticsService = void 0;
 var AnalyticsService_1 = require("./AnalyticsService");
 Object.defineProperty(exports, "AnalyticsService", { enumerable: true, get: function () { return AnalyticsService_1.AnalyticsService; } });
 var DigestService_1 = require("./DigestService");
@@ -37,4 +37,16 @@ var TogglService_1 = require("./TogglService");
 Object.defineProperty(exports, "TogglService", { enumerable: true, get: function () { return TogglService_1.TogglService; } });
 var HarvestService_1 = require("./HarvestService");
 Object.defineProperty(exports, "HarvestService", { enumerable: true, get: function () { return HarvestService_1.HarvestService; } });
+var OpenAIService_1 = require("./OpenAIService");
+Object.defineProperty(exports, "OpenAIService", { enumerable: true, get: function () { return OpenAIService_1.OpenAIService; } });
+var ClaudeService_1 = require("./ClaudeService");
+Object.defineProperty(exports, "ClaudeService", { enumerable: true, get: function () { return ClaudeService_1.ClaudeService; } });
+var LocalLLMService_1 = require("./LocalLLMService");
+Object.defineProperty(exports, "LocalLLMService", { enumerable: true, get: function () { return LocalLLMService_1.LocalLLMService; } });
+var AIInsightsService_1 = require("./AIInsightsService");
+Object.defineProperty(exports, "AIInsightsService", { enumerable: true, get: function () { return AIInsightsService_1.AIInsightsService; } });
+var WorkflowAutomationService_1 = require("./WorkflowAutomationService");
+Object.defineProperty(exports, "WorkflowAutomationService", { enumerable: true, get: function () { return WorkflowAutomationService_1.WorkflowAutomationService; } });
+var SmartNotificationsService_1 = require("./SmartNotificationsService");
+Object.defineProperty(exports, "SmartNotificationsService", { enumerable: true, get: function () { return SmartNotificationsService_1.SmartNotificationsService; } });
 //# sourceMappingURL=index.js.map

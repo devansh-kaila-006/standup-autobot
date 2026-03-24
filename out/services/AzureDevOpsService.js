@@ -47,7 +47,7 @@ exports.AzureDevOpsService = void 0;
 const vscode = __importStar(require("vscode"));
 const https = __importStar(require("https"));
 const Logger_1 = require("../utils/Logger");
-const logger = new Logger_1.Logger();
+const logger = new Logger_1.Logger('AzureDevOpsService');
 class AzureDevOpsService {
     constructor(context) {
         this.context = context;
@@ -92,7 +92,7 @@ class AzureDevOpsService {
         ];
         const workItemIds = new Set();
         for (const pattern of patterns) {
-            const matches = message.matchAll(pattern);
+            const matches = Array.from(message.matchAll(pattern));
             for (const match of matches) {
                 const id = parseInt(match[match.length - 1], 10);
                 if (!isNaN(id)) {

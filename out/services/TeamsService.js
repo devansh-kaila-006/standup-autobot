@@ -48,7 +48,7 @@ exports.TeamsService = void 0;
 const vscode = __importStar(require("vscode"));
 const https = __importStar(require("https"));
 const Logger_1 = require("../utils/Logger");
-const logger = new Logger_1.Logger();
+const logger = new Logger_1.Logger('TeamsService');
 class TeamsService {
     constructor(context) {
         this.context = context;

@@ -46,7 +46,7 @@ exports.GitHubService = void 0;
 const vscode = __importStar(require("vscode"));
 const https = __importStar(require("https"));
 const Logger_1 = require("../utils/Logger");
-const logger = new Logger_1.Logger();
+const logger = new Logger_1.Logger('GitHubService');
 class GitHubService {
     constructor(context) {
         this.context = context;
@@ -122,7 +122,7 @@ class GitHubService {
                 refs.push(...matches);
             }
         }
-        return [...new Set(refs)]; // Remove duplicates
+        return Array.from(new Set(refs)); // Remove duplicates
     }
     /**
      * Link activity to GitHub issues
