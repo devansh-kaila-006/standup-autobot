@@ -73,8 +73,8 @@ export function activate(context: vscode.ExtensionContext) {
         }
     };
 
-    // Generate Daily
-    const generateDisposable = vscode.commands.registerCommand('standup.generate', async () => {
+    // Generate Daily Standup
+    const generateDaily = async () => {
         const config = ConfigManager.getConfig();
         const durationHours = config.activityDuration;
         const apiKey = await ensureApiKey(context);
@@ -99,53 +99,25 @@ export function activate(context: vscode.ExtensionContext) {
                 vscode.window.showErrorMessage(`Failed to generate standup: ${error.message}`);
             }
         });
-    });
+    };
 
-    // Generate Standup (new command name for keyboard shortcuts)
-    const generateDisposable2 = vscode.commands.registerCommand('standup.generateStandup', async () => {
-        const config = ConfigManager.getConfig();
-        const durationHours = config.activityDuration;
-        const apiKey = await ensureApiKey(context);
-        if (!apiKey) return;
+    // Register both command names for backward compatibility
+    const generateDisposable = vscode.commands.registerCommand('standup.generate', generateDaily);
+    const generateDisposable2 = vscode.commands.registerCommand('standup.generateStandup', generateDaily);
 
-        vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: "Gathering activity..." }, async () => {
-            try {
-                const dailyData = {
-                    topFiles: activityTracker.getTopFiles(5),
-                    commits: await gitTracker.getRecentCommits(durationHours),
-                    commands: await terminalTracker.getTerminalHistory(10)
-                };
-                const markdown = await standupGenerator.generateStandup(dailyData, apiKey, config, durationHours);
-                context.globalState.update('standup.lastGenerated', markdown);
-                StandupCardProvider.createOrShow(context.extensionUri, markdown, context);
-                await historyService.saveStandup(markdown);
-                await historyService.logActivity(activityTracker.getFileCount());
+    // View History
+    const showHistory = () => HistoryPanel.createOrShow(context.extensionUri, context);
 
-                // Auto-post to integrations if configured
-                await autoPostStandup(markdown);
-            } catch (error: any) {
-                vscode.window.showErrorMessage(`Failed to generate standup: ${error.message}`);
-            }
-        });
-    });
+    // Register both command names for backward compatibility
+    const historyDisposable = vscode.commands.registerCommand('standup.viewHistory', showHistory);
+    const historyDisposable2 = vscode.commands.registerCommand('standup.showHistory', showHistory);
 
-    // View History (alias for backwards compatibility)
-    const historyDisposable = vscode.commands.registerCommand('standup.viewHistory', () => {
-        HistoryPanel.createOrShow(context.extensionUri, context);
-    });
+    // View Analytics Dashboard
+    const showAnalytics = () => AnalyticsPanel.createOrShow(context.extensionUri, context);
 
-    const historyDisposable2 = vscode.commands.registerCommand('standup.showHistory', () => {
-        HistoryPanel.createOrShow(context.extensionUri, context);
-    });
-
-    // View Analytics Dashboard (alias for backwards compatibility)
-    const analyticsDisposable = vscode.commands.registerCommand('standup.viewAnalytics', () => {
-        AnalyticsPanel.createOrShow(context.extensionUri, context);
-    });
-
-    const analyticsDisposable2 = vscode.commands.registerCommand('standup.showAnalytics', () => {
-        AnalyticsPanel.createOrShow(context.extensionUri, context);
-    });
+    // Register both command names for backward compatibility
+    const analyticsDisposable = vscode.commands.registerCommand('standup.viewAnalytics', showAnalytics);
+    const analyticsDisposable2 = vscode.commands.registerCommand('standup.showAnalytics', showAnalytics);
 
     // Toggle Tracking
     const toggleTrackingDisposable = vscode.commands.registerCommand('standup.toggleTracking', async () => {
@@ -155,8 +127,8 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.showInformationMessage(`Standup tracking ${!isPaused ? 'paused' : 'resumed'}.`);
     });
 
-    // Data Audit
-    const previewDataDisposable = vscode.commands.registerCommand('standup.previewData', async () => {
+    // Data Audit / Preview Data
+    const showDataAudit = async () => {
         const data = {
             topFiles: activityTracker.getTopFiles(10),
             commits: await gitTracker.getRecentCommits(24),
@@ -165,17 +137,11 @@ export function activate(context: vscode.ExtensionContext) {
         DataAuditPanel.createOrShow(context.extensionUri, data, () => {
             vscode.commands.executeCommand('standup.generate');
         }, context);
-    });
-    const dataAuditDisposable2 = vscode.commands.registerCommand('standup.dataAudit', async () => {
-        const data = {
-            topFiles: activityTracker.getTopFiles(10),
-            commits: await gitTracker.getRecentCommits(24),
-            commands: await terminalTracker.getTerminalHistory(20)
-        };
-        DataAuditPanel.createOrShow(context.extensionUri, data, () => {
-            vscode.commands.executeCommand('standup.generate');
-        }, context);
-    });
+    };
+
+    // Register both command names for backward compatibility
+    const previewDataDisposable = vscode.commands.registerCommand('standup.previewData', showDataAudit);
+    const dataAuditDisposable2 = vscode.commands.registerCommand('standup.dataAudit', showDataAudit);
 
     // Weekly Digest
     const weeklyDigestDisposable = vscode.commands.registerCommand('standup.generateWeeklyDigest', async () => {
