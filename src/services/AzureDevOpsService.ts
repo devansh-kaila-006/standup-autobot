@@ -574,7 +574,7 @@ export class AzureDevOpsService {
                 path: urlObj.pathname + urlObj.search,
                 method: method,
                 headers: {
-                    'Authorization': `Basic ${Buffer.from(':' + this.config.pat).toString('base64')}`,
+                    'Authorization': `Basic ${Buffer.from(':' + (this.config?.pat || '')).toString('base64')}`,
                     'Accept': 'application/json',
                     'Content-Type': method === 'PATCH' ? 'application/json-patch+json' : 'application/json',
                 },
@@ -631,7 +631,7 @@ export class AzureDevOpsService {
      * Get current user info
      */
     private async getCurrentUser(): Promise<any> {
-        const url = `${this.config.apiUrl}/${this.config.organization}/_apis/connections/connections?api-version=7.0`;
+        const url = `${this.config?.apiUrl || 'https://dev.azure.com'}/${this.config?.organization || ''}/_apis/connections/connections?api-version=7.0`;
         return await this.makeAzureRequest(url, 'GET');
     }
 
