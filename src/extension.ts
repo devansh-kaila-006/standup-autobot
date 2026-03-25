@@ -12,6 +12,7 @@ import { ConfigManager } from './utils/ConfigManager';
 import { HistoryPanel } from './webviews/HistoryPanel';
 import { DataAuditPanel } from './webviews/DataAuditPanel';
 import { AnalyticsPanel } from './webviews/AnalyticsPanel';
+import { SidePanelProvider } from './webviews/SidePanelProvider';
 import { KeyboardShortcutManager } from './utils/KeyboardShortcutManager';
 import { I18nService } from './i18n/I18nService';
 import { UnifiedAIService } from './services/UnifiedAIService';
@@ -39,7 +40,26 @@ export function activate(context: vscode.ExtensionContext) {
     // --- Phase 7: Initialize UX services ---
     const i18nService = new I18nService(context);
     const keyboardShortcutManager = new KeyboardShortcutManager();
-    
+
+    // --- Initialize Side Panel Provider ---
+    const sidePanelProvider = new SidePanelProvider(
+        activityTracker,
+        gitTracker,
+        terminalTracker,
+        historyService,
+        context,
+        context.extensionUri
+    );
+    context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider(
+            SidePanelProvider.viewType,
+            sidePanelProvider
+        )
+    );
+
+    // Set context key for enabling the extension
+    vscode.commands.executeCommand('setContext', 'standup.autobot.enabled', true);
+
     // --- 2. Register Commands ---
 
     // Helper function to auto-post standup to integrations

@@ -28,7 +28,8 @@
   ],
   "activationEvents": [
     "onStartupFinished",
-    "onWebviewPanel:standupAutobot.dashboard"
+    "onWebviewPanel:standupAutobot.dashboard",
+    "onView:standupAutobot.sidePanel"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -332,7 +333,24 @@
         "key": "ctrl+alt+,",
         "mac": "cmd+alt+,"
       }
-    ]
+    ],
+    "activityBar": [
+      {
+        "id": "standupAutobot.activityBar",
+        "title": "Standup Autobot",
+        "icon": "media/icons/dashboard.svg"
+      }
+    ],
+    "views": {
+      "standupAutobot.activityBar": [
+        {
+          "id": "standupAutobot.sidePanel",
+          "name": "Dashboard",
+          "type": "webview",
+          "contextualTitle": "Standup Dashboard"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.0.0] - 2026-03-25
 
 ### Added
+- **Side Panel Dashboard** (NEW!): Activity Bar integration with persistent dashboard
+  - Real-time activity feed with live updates (auto-refresh every 5 seconds)
+  - Quick action buttons for common tasks (Generate Standup, Toggle Tracking, Copy, View History/Analytics)
+  - Visual tracking status indicator (active/paused) with file count
+  - Displays top 5 files, recent commits, and terminal commands
+  - Full keyboard navigation and accessibility support
+  - 45 comprehensive tests ensuring reliability
 - **Multiple AI Providers**: Support for Google Gemini, OpenAI GPT, Anthropic Claude, and local LLMs (Ollama)
 - **Automatic Failover**: Primary and fallback AI provider configuration
 - **Advanced Analytics Dashboard**: Interactive charts showing work patterns and trends
@@ -34,20 +41,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Weekly Digests**: Automated AI-generated Friday summaries
 - **Smart Scheduling**: Contextual reminders at optimal times
 - **Multi-Language Support**: 10 locales with proper date/time/number formatting
-- **Keyboard Shortcuts**: 11 configurable keyboard shortcuts
+- **Keyboard Shortcuts**: 12 configurable keyboard shortcuts (added Ctrl+Alt+B for Dashboard)
 - **Accessibility Features**: WCAG 2.1 AA compliance, screen reader support, ARIA labels
 - **Data Audit Panel**: Preview raw data before AI processing
 - **Enhanced Privacy**: Configurable ignore patterns, automatic data cleanup
 
 ### Changed
-- **Improved Test Coverage**: 592/592 tests passing (100% success rate)
-- **Test Suite Expansion**: From 26 to 27 test suites
+- **Improved Test Coverage**: 637/637 tests passing (100% success rate) - added 45 SidePanelProvider tests
+- **Test Suite Expansion**: From 27 to 28 test suites
 - **Null Safety**: Comprehensive null checks across all service layers
 - **Cache Management**: Proper cache clearing to prevent test pollution
 - **Async Operations**: Fixed debounce/throttle timing with proper Jest timer management
 - **Terminal Tracking**: Enhanced configuration options (integrated/history/both modes)
 - **Git Integration**: Improved hash format validation (40-character hex strings)
 - **Type Safety**: Full TypeScript strict mode compliance
+- **Enhanced Webview Testing**: Added VS Code `registerWebviewViewProvider` mock for extension tests
 
 ### Fixed
 - Fixed TeamsService API method calls
@@ -66,10 +74,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Enhanced null safety in all API services
   - Improved error handling and logging
   - Better configuration management
-- **Webviews**: 90/90 tests passing
+- **Webviews**: 135/135 tests passing (added 45 SidePanelProvider tests)
+  - **NEW**: SidePanelProvider with Activity Bar integration
   - Enhanced accessibility features
   - Improved theme handling (dark/light/high-contrast)
   - Better internationalization support
+  - Auto-refresh timer management (5-second intervals)
+  - React-based dashboard with live updates
 - **Trackers**: 83/83 tests passing
   - Improved activity tracking accuracy
   - Better git commit parsing
@@ -85,6 +96,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Enhanced command registration
   - Improved status bar integration
   - Better configuration handling
+  - Added SidePanelProvider registration with context key management
 
 ## [1.0.0] - 2026-03-15
 

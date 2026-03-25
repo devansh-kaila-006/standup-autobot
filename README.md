@@ -4,6 +4,15 @@
 
 ## 🌟 Key Features
 
+### 🎛️ Side Panel Dashboard (NEW!)
+- **Activity Bar Integration**: Quick access dashboard in VS Code's Activity Bar
+- **Real-Time Activity Feed**: See your top files, recent commits, and terminal commands update live
+- **Quick Actions**: One-click access to Generate Standup, Toggle Tracking, Copy, View History/Analytics
+- **Tracking Status**: Visual indicator showing tracking status (active/paused) with file count
+- **Auto-Refresh**: Dashboard updates every 5 seconds with latest activity data
+- **Persistent UI**: Always available without blocking your workspace
+- **Keyboard Accessible**: Full keyboard navigation support
+
 ### 🕵️ Intelligent Activity Tracking
 - **Silent Background Monitoring**: Automatically records file edits, line changes, time spent, Git commits, and terminal commands
 - **Smart Categorization**: Auto-tags activities as bugfix, feature, chore, refactor, documentation, or test
@@ -159,6 +168,7 @@ Create a `.standup.json` in your workspace root for project-specific settings:
 | `Ctrl+Alt+A` | Show Analytics |
 | `Ctrl+Alt+D` | Data Audit Panel |
 | `Ctrl+Alt+N` | Show Notifications |
+| `Ctrl+Alt+B` | Show Dashboard (NEW!) |
 | `Ctrl+Alt+R` | Mark Notifications Read |
 | `Ctrl+Alt+T` | Toggle Timer |
 | `Ctrl+Alt+,` | Open Settings |
@@ -176,6 +186,7 @@ Create a `.standup.json` in your workspace root for project-specific settings:
 - **Standup: Show History** - View standup history and trends
 - **Standup: Show Analytics** - Open productivity dashboard
 - **Standup: Data Audit** - Preview raw data before AI processing
+- **Standup: Show Dashboard** - Open Activity Bar side panel (NEW!)
 
 ### Settings Commands
 - **Standup: Set Gemini API Key** - Configure Google Gemini
@@ -308,14 +319,14 @@ Built-in templates:
 
 ## 🧪 Testing & Quality
 
-- **592 Passing Tests**: 100% test success rate (592/592)
-- **27 Test Suites**: All passing with comprehensive coverage
+- **637 Passing Tests**: 100% test success rate (637/637)
+- **28 Test Suites**: All passing with comprehensive coverage
 - **0 Skipped Tests**: All tests actively running
 - **Test Categories**:
   - Utils: 247/247 passing
   - Services: 118/118 passing
-  - Webviews: 90/90 passing
-  - Trackers: 83/83 passing (2 previously skipped now enabled)
+  - Webviews: 135/135 passing (includes 45 new SidePanelProvider tests)
+  - Trackers: 83/83 passing
   - Integration: 25/25 passing
   - Extension: 29/29 passing
 - **TypeScript Strict Mode**: Type-safe codebase
@@ -324,10 +335,16 @@ Built-in templates:
 
 ### Recent Test Improvements (March 2026)
 
+**Side Panel Dashboard (NEW!):**
+- Added 45 comprehensive tests for SidePanelProvider
+- Tests cover initialization, data fetching, message handling, auto-refresh
+- HTML generation, theme changes, accessibility, and disposal all tested
+- 100% test coverage for new dashboard functionality
+
 **Comprehensive Test Suite Enhancement:**
 - Fixed all 123 previously failing tests across all categories
 - Re-enabled and fixed 2 previously skipped git tracker tests
-- Achieved 100% test success rate (592/592 passing)
+- Achieved 100% test success rate (637/637 passing)
 - Improved cache management to prevent test pollution
 - Enhanced null safety across all service layers
 
@@ -367,3 +384,13 @@ Built with:
 ---
 
 **Version**: 2.0.0 | **Last Updated**: March 25, 2026 | **Status**: Production Ready ✅
+
+## 🎉 What's New in v2.0.0
+
+### Side Panel Dashboard
+- **NEW**: Activity Bar integration with persistent dashboard
+- **NEW**: Real-time activity feed with live updates
+- **NEW**: Quick action buttons for common tasks
+- **NEW**: Visual tracking status indicator
+- **NEW**: Auto-refresh every 5 seconds
+- **NEW**: 45 new tests ensuring dashboard reliability

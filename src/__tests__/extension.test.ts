@@ -13,6 +13,7 @@ jest.mock('../utils/ConfigManager');
 jest.mock('../webviews/standupCard');
 jest.mock('../webviews/HistoryPanel');
 jest.mock('../webviews/DataAuditPanel');
+jest.mock('../webviews/SidePanelProvider');
 jest.mock('../utils/auth');
 
 // Mock vscode
@@ -43,6 +44,7 @@ jest.mock('vscode', () => {
             showErrorMessage: jest.fn(),
             showWarningMessage: jest.fn(),
             showInputBox: jest.fn(),
+            registerWebviewViewProvider: jest.fn(() => mockDisposable),
         },
         commands: {
             registerCommand: jest.fn((id, callback) => {
