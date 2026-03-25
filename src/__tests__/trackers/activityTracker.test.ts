@@ -431,6 +431,9 @@ describe('ActivityTracker', () => {
 
             tracker.reset();
 
+            // Advance timers to trigger debounced save
+            jest.advanceTimersByTime(1000);
+
             expect(tracker.getFileCount()).toBe(0);
             expect(mockContext.globalState.update).toHaveBeenCalledWith('activityTrackerData', expect.any(Object));
         });

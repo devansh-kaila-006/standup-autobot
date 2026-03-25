@@ -17,6 +17,18 @@ jest.mock('vscode', () => {
     };
 
     return {
+        workspace: {
+            getConfiguration: jest.fn(() => ({
+                get: jest.fn((key: string) => {
+                    if (key === 'workbench.colorTheme') return 'Dark+';
+                    return undefined;
+                }),
+                update: jest.fn(),
+            })),
+            onDidChangeConfiguration: jest.fn(() => ({
+                dispose: jest.fn(),
+            })),
+        },
         window: {
             activeTextEditor: {
                 viewColumn: 1,
@@ -34,6 +46,7 @@ jest.mock('vscode', () => {
             parse: jest.fn(),
         },
         env: {
+            language: 'en',
             clipboard: {
                 writeText: jest.fn(),
             },
@@ -339,7 +352,7 @@ describe('HistoryPanel', () => {
         it('should include custom styles', () => {
             HistoryPanel.createOrShow(mockExtensionUri, mockContext);
 
-            expect(mockPanel.webview.html).toContain('--bg: #1e1e1e');
+            expect(mockPanel.webview.html).toContain('--background-color: #1e1e1e');
             expect(mockPanel.webview.html).toContain('.heatmap-section');
             expect(mockPanel.webview.html).toContain('.history-item');
         });
@@ -355,18 +368,16 @@ describe('HistoryPanel', () => {
             HistoryPanel.createOrShow(mockExtensionUri, mockContext);
 
             expect(mockPanel.webview.html).toContain('HistoryApp');
-            expect(mockPanel.webview.html).toContain('History & Trends');
+            expect(mockPanel.webview.html).toContain('Standup History');
         });
 
         it('should handle empty history', () => {
-            const historyServiceInstance = new HistoryService(mockContext);
-            const historyServiceMock = historyServiceInstance as jest.Mocked<HistoryService>;
-            historyServiceMock.getHistory.mockReturnValue([]);
-            historyServiceMock.getAllActivity.mockReturnValue([]);
+            // Mock empty history in context
+            (mockContext.globalState.get as jest.Mock).mockReturnValue([]);
 
             HistoryPanel.createOrShow(mockExtensionUri, mockContext);
 
-            expect(mockPanel.webview.html).toContain('No history found yet');
+            expect(mockPanel.webview.html).toContain('history.noEntries');
         });
     });
 

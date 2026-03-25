@@ -368,6 +368,11 @@ export class JiraService {
         return new Promise((resolve, reject) => {
             const urlObj = new URL(url);
 
+            if (!this.config) {
+                reject(new Error('Jira configuration not loaded'));
+                return;
+            }
+
             const options = {
                 hostname: urlObj.hostname,
                 port: 443,
@@ -431,6 +436,9 @@ export class JiraService {
      * Get current user info
      */
     private async getCurrentUser(): Promise<any> {
+        if (!this.config) {
+            throw new Error('Jira configuration not loaded');
+        }
         const url = `https://${this.config.domain}.atlassian.net/rest/api/3/myself`;
         return await this.makeJiraRequest(url, 'GET');
     }

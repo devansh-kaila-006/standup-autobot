@@ -540,7 +540,6 @@ export class SlackService {
         try {
             const url = 'https://slack.com/api/chat.update';
             const response = await this.makeSlackRequest(url, 'POST', {
-                channel,
                 ts,
                 ...message,
             });
@@ -590,6 +589,11 @@ export class SlackService {
 
         return new Promise((resolve, reject) => {
             const urlObj = new URL(url);
+
+            if (!this.config) {
+                reject(new Error('Slack configuration not loaded'));
+                return;
+            }
 
             const options = {
                 hostname: urlObj.hostname,

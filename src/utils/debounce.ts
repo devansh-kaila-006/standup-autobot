@@ -32,6 +32,7 @@ export class DebouncedFunction<T extends (...args: any[]) => any> {
     private maxTimeoutId: NodeJS.Timeout | null = null;
     private result: any;
     private isInvoking: boolean = false;
+    private lastArgs: Parameters<T> | null = null;
 
     constructor(
         private func: T,
@@ -52,6 +53,9 @@ export class DebouncedFunction<T extends (...args: any[]) => any> {
         if (this.maxTimeoutId) {
             clearTimeout(this.maxTimeoutId);
         }
+
+        // Store arguments for flush
+        this.lastArgs = args;
 
         // Set max wait timeout if specified
         if (this.options.maxWait !== undefined) {
@@ -116,9 +120,9 @@ export class DebouncedFunction<T extends (...args: any[]) => any> {
      * Execute immediately (flush)
      */
     flush(): ReturnType<T> | undefined {
-        if (this.timeoutId) {
+        if (this.timeoutId && this.lastArgs) {
             this.cancel();
-            return this.invokeFunction([] as any);
+            return this.invokeFunction(this.lastArgs);
         }
         return undefined;
     }
@@ -211,6 +215,7 @@ export class ThrottledFunction<T extends (...args: any[]) => any> {
     private timeoutId: NodeJS.Timeout | null = null;
     private lastResult: any;
     private lastArgs: Parameters<T> | null = null;
+    private pendingArgs: Parameters<T> | null = null;
 
     constructor(
         private func: T,
@@ -219,16 +224,19 @@ export class ThrottledFunction<T extends (...args: any[]) => any> {
 
     execute(...args: Parameters<T>): ReturnType<T> {
         this.lastArgs = args;
+        this.pendingArgs = args;
 
         if (!this.timeoutId) {
             // Execute immediately
             this.lastResult = this.func(...args);
+            this.pendingArgs = null;
 
             // Set up timeout for next execution
             this.timeoutId = setTimeout(() => {
                 this.timeoutId = null;
-                if (this.lastArgs) {
-                    this.lastResult = this.func(...this.lastArgs);
+                if (this.pendingArgs) {
+                    this.lastResult = this.func(...this.pendingArgs);
+                    this.pendingArgs = null;
                 }
             }, this.delay);
         }
@@ -242,6 +250,7 @@ export class ThrottledFunction<T extends (...args: any[]) => any> {
             this.timeoutId = null;
         }
         this.lastArgs = null;
+        this.pendingArgs = null;
     }
 }
 

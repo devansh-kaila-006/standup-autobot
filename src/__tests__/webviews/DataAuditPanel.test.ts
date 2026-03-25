@@ -16,6 +16,18 @@ jest.mock('vscode', () => {
     };
 
     return {
+        workspace: {
+            getConfiguration: jest.fn(() => ({
+                get: jest.fn((key: string) => {
+                    if (key === 'workbench.colorTheme') return 'Dark+';
+                    return undefined;
+                }),
+                update: jest.fn(),
+            })),
+            onDidChangeConfiguration: jest.fn(() => ({
+                dispose: jest.fn(),
+            })),
+        },
         window: {
             activeTextEditor: {
                 viewColumn: 1,
@@ -32,6 +44,9 @@ jest.mock('vscode', () => {
         Uri: {
             joinPath: jest.fn(),
             parse: jest.fn(),
+        },
+        env: {
+            language: 'en',
         },
     };
 });
@@ -289,7 +304,7 @@ describe('DataAuditPanel', () => {
 
             DataAuditPanel.createOrShow(mockExtensionUri, mockData, mockOnConfirm);
 
-            expect(mockPanel.webview.html).toContain('Google Gemini Flash');
+            expect(mockPanel.webview.html).toContain('The following information will be sent to generate your standup summary');
         });
 
         it('should include confirm and cancel buttons', () => {

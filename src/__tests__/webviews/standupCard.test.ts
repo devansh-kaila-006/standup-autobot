@@ -23,6 +23,9 @@ jest.mock('vscode', () => {
             }),
             update: jest.fn(),
         })),
+        onDidChangeConfiguration: jest.fn(() => ({
+            dispose: jest.fn(),
+        })),
     };
 
     return {
@@ -47,6 +50,7 @@ jest.mock('vscode', () => {
             parse: jest.fn(),
         },
         env: {
+            language: 'en',
             clipboard: {
                 writeText: jest.fn(),
             },

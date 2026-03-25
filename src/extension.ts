@@ -64,7 +64,7 @@ export function activate(context: vscode.ExtensionContext) {
             try {
                 const webhookUrl = await context.secrets.get('standup.teamsWebhookUrl');
                 if (webhookUrl) {
-                    await teamsService.sendMessage(markdown);
+                    await teamsService.postSimpleMessage(webhookUrl, markdown, 'Daily Standup');
                     vscode.window.showInformationMessage('Standup posted to Teams!');
                 }
             } catch (error: any) {

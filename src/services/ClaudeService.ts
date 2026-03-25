@@ -406,6 +406,11 @@ Provide:
         return new Promise((resolve, reject) => {
             const urlObj = new URL(url);
 
+            if (!this.config) {
+                reject(new Error('Claude configuration not loaded'));
+                return;
+            }
+
             const options = {
                 hostname: urlObj.hostname,
                 port: 443,

@@ -32,6 +32,12 @@ jest.mock('vscode', () => {
                 show: jest.fn(),
                 dispose: jest.fn(),
             })),
+            createOutputChannel: jest.fn(() => ({
+                append: jest.fn(),
+                appendLine: jest.fn(),
+                show: jest.fn(),
+                dispose: jest.fn(),
+            })),
             withProgress: jest.fn(),
             showInformationMessage: jest.fn(),
             showErrorMessage: jest.fn(),
@@ -74,6 +80,7 @@ jest.mock('vscode', () => {
             parse: jest.fn(),
         },
         env: {
+            language: 'en',
             clipboard: {
                 writeText: jest.fn(),
             },
@@ -298,11 +305,13 @@ describe('extension', () => {
     describe('scheduler', () => {
         it('should setup scheduler on activation', () => {
             jest.useFakeTimers();
+            const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
 
             activate(mockContext);
 
-            expect(setTimeout).toHaveBeenCalled();
+            expect(setTimeoutSpy).toHaveBeenCalled();
 
+            setTimeoutSpy.mockRestore();
             jest.useRealTimers();
         });
 

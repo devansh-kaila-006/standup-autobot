@@ -441,6 +441,11 @@ Provide:
         return new Promise((resolve, reject) => {
             const urlObj = new URL(url);
 
+            if (!this.config) {
+                reject(new Error('OpenAI configuration not loaded'));
+                return;
+            }
+
             const headers: Record<string, string> = {
                 'Authorization': `Bearer ${this.config.apiKey}`,
                 'Content-Type': 'application/json',

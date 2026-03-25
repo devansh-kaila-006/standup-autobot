@@ -8,6 +8,19 @@
 import { MemoryManager } from '../../services/MemoryManager';
 import * as vscode from 'vscode';
 
+// Mock vscode.workspace.getConfiguration
+jest.mock('vscode', () => ({
+    workspace: {
+        getConfiguration: jest.fn(() => ({
+            get: jest.fn((key: string, defaultValue: any) => {
+                if (key === 'dataRetentionDays') return 30;
+                if (key === 'cleanupIntervalDays') return 7;
+                return defaultValue;
+            }),
+        })),
+    },
+}));
+
 describe('Memory Stability Tests', () => {
     let memoryManager: MemoryManager;
     let mockContext: vscode.ExtensionContext;
@@ -72,8 +85,8 @@ describe('Memory Stability Tests', () => {
 
     describe('LRU Cache', () => {
         it('should evict least recently used items when cache is full', () => {
-            const cacheSize = 5;
-            const testData = Array.from({ length: 10 }, (_, i) => ({
+            // MAX_CACHE_SIZE is 100, so we need to add more than 100 items
+            const testData = Array.from({ length: 105 }, (_, i) => ({
                 key: `key${i}`,
                 value: `value${i}`,
             }));
@@ -84,17 +97,17 @@ describe('Memory Stability Tests', () => {
             });
 
             // Access some items to update their LRU status
-            memoryManager.getCache('key8');
-            memoryManager.getCache('key9');
+            memoryManager.getCache('key100');
+            memoryManager.getCache('key101');
 
             // Add more items
-            memoryManager.setCache('key10', 'value10');
+            memoryManager.setCache('key105', 'value105');
 
             const stats = memoryManager.getCacheStats();
 
-            // Cache should not exceed max size
-            expect(stats.size).toBeLessThanOrEqual(cacheSize);
-            expect(stats.utilizationPercent).toBeLessThanOrEqual(100);
+            // Cache should not exceed max size of 100
+            expect(stats.size).toBe(100);
+            expect(stats.utilizationPercent).toBe(100);
         });
 
         it('should track access count for cache entries', () => {
@@ -109,7 +122,8 @@ describe('Memory Stability Tests', () => {
 
             expect(stats.mostAccessed.length).toBeGreaterThan(0);
             expect(stats.mostAccessed[0].key).toBe('test-key');
-            expect(stats.mostAccessed[0].accessCount).toBe(3);
+            // accessCount starts at 1 when set, then increments with each get: 1 + 3 = 4
+            expect(stats.mostAccessed[0].accessCount).toBe(4);
         });
     });
 

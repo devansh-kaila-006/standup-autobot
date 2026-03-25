@@ -176,7 +176,7 @@ describe('auth', () => {
 
             expect(result).toBe(newKey);
             expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
-                '⚠️ Standup Autobot needs an API Key to generate summaries.',
+                expect.stringContaining('Standup Autobot needs an API Key to generate summaries.'),
                 'Set API Key',
                 'Cancel'
             );

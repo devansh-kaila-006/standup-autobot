@@ -1,5 +1,6 @@
 import { StandupGenerator, DeveloperActivityData, StandupSettings } from '../../services/standupGenerator';
 import { APIError } from '../../utils/errors';
+import { geminiAPICache } from '../../utils/apiCache';
 
 // Mock fetch globally
 const mockFetch = jest.fn();
@@ -13,6 +14,7 @@ describe('StandupGenerator', () => {
         generator = new StandupGenerator();
         mockApiKey = 'test-api-key-123';
         jest.clearAllMocks();
+        geminiAPICache.clear(); // Clear cache between tests
     });
 
     afterEach(() => {

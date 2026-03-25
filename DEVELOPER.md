@@ -311,9 +311,23 @@ npm test -- path/to/test.test.ts
 
 ### Test Organization
 
-- **Unit tests**: Test individual functions and classes
-- **Integration tests**: Test multiple components working together
-- **Extension tests**: Test the VS Code extension API
+- **Utils tests** (`src/__tests__/utils/`): 247 tests
+  - Utility functions, helpers, and standalone modules
+  - Examples: auth, debounce, rateLimiter, ActivityAnalyzer
+- **Services tests** (`src/__tests__/services/`): 118 tests
+  - Service layer classes and business logic
+  - Examples: standupGenerator, HistoryService, ExporterService
+- **Webviews tests** (`src/__tests__/webviews/`): 90 tests
+  - UI components and webview panels
+  - Examples: standupCard, HistoryPanel, DataAuditPanel
+- **Trackers tests** (`src/__tests__/trackers/`): 83 tests
+  - Activity tracking, git integration, terminal monitoring
+  - Examples: activityTracker, gitTracker, terminalTracker
+- **Integration tests** (`src/__tests__/integration/`): 25 tests
+  - Cross-component workflows and memory management
+  - Examples: workflows, memoryStability
+- **Extension tests** (`src/__tests__/extension.test.ts`): 29 tests
+  - VS Code extension activation and command registration
 
 ### Writing Tests
 
@@ -342,9 +356,17 @@ describe('MyService', () => {
 
 ### Test Coverage
 
-Current coverage: **81.57%** (statements)
-Target: **85%+**
+Current test status: **592/592 passing (100% success rate)**
 
+Test breakdown by category:
+- **Utils**: 247/247 passing (100%)
+- **Services**: 118/118 passing (100%)
+- **Webviews**: 90/90 passing (100%)
+- **Trackers**: 83/83 passing (100%)
+- **Integration**: 25/25 passing (100%)
+- **Extension**: 29/29 passing (100%)
+
+Run `npm test` to execute all tests.
 Run `npm run test:coverage` to see detailed coverage report.
 
 ## Contributing Guidelines

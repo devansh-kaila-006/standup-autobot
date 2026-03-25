@@ -158,7 +158,8 @@ describe('TerminalTracker - Enhanced Cross-Platform', () => {
             const mockConfig = {
                 get: jest.fn((key: string, defaultValue: any) => {
                     if (key === 'paused') return false;
-                    if (key === 'terminalTracking.enabled') return true;
+                    if (key === 'enableTerminalTracking') return true;
+                    if (key === 'terminalTrackingMode') return 'history';
                     return defaultValue;
                 }),
             };
@@ -176,7 +177,8 @@ describe('TerminalTracker - Enhanced Cross-Platform', () => {
             const mockConfig = {
                 get: jest.fn((key: string, defaultValue: any) => {
                     if (key === 'paused') return false;
-                    if (key === 'terminalTracking.enabled') return true;
+                    if (key === 'enableTerminalTracking') return true;
+                    if (key === 'terminalTrackingMode') return 'history';
                     return defaultValue;
                 }),
             };
@@ -194,7 +196,8 @@ describe('TerminalTracker - Enhanced Cross-Platform', () => {
             const mockConfig = {
                 get: jest.fn((key: string, defaultValue: any) => {
                     if (key === 'paused') return false;
-                    if (key === 'terminalTracking.enabled') return true;
+                    if (key === 'enableTerminalTracking') return true;
+                    if (key === 'terminalTrackingMode') return 'history';
                     return defaultValue;
                 }),
             };
@@ -211,7 +214,8 @@ describe('TerminalTracker - Enhanced Cross-Platform', () => {
             const mockConfig = {
                 get: jest.fn((key: string, defaultValue: any) => {
                     if (key === 'paused') return false;
-                    if (key === 'terminalTracking.enabled') return true;
+                    if (key === 'enableTerminalTracking') return true;
+                    if (key === 'terminalTrackingMode') return 'history';
                     return defaultValue;
                 }),
             };
@@ -237,7 +241,8 @@ describe('TerminalTracker - Enhanced Cross-Platform', () => {
             const mockConfig = {
                 get: jest.fn((key: string, defaultValue: any) => {
                     if (key === 'paused') return false;
-                    if (key === 'terminalTracking.enabled') return true;
+                    if (key === 'enableTerminalTracking') return true;
+                    if (key === 'terminalTrackingMode') return 'history';
                     return defaultValue;
                 }),
             };
@@ -266,7 +271,8 @@ describe('TerminalTracker - Enhanced Cross-Platform', () => {
             const mockConfig = {
                 get: jest.fn((key: string, defaultValue: any) => {
                     if (key === 'paused') return false;
-                    if (key === 'terminalTracking.enabled') return true;
+                    if (key === 'enableTerminalTracking') return true;
+                    if (key === 'terminalTrackingMode') return 'history';
                     return defaultValue;
                 }),
             };
@@ -295,7 +301,8 @@ describe('TerminalTracker - Enhanced Cross-Platform', () => {
             const mockConfig = {
                 get: jest.fn((key: string, defaultValue: any) => {
                     if (key === 'paused') return false;
-                    if (key === 'terminalTracking.enabled') return true;
+                    if (key === 'enableTerminalTracking') return true;
+                    if (key === 'terminalTrackingMode') return 'history';
                     return defaultValue;
                 }),
             };
@@ -325,7 +332,8 @@ describe('TerminalTracker - Enhanced Cross-Platform', () => {
             const mockConfig = {
                 get: jest.fn((key: string, defaultValue: any) => {
                     if (key === 'paused') return false;
-                    if (key === 'terminalTracking.enabled') return true;
+                    if (key === 'enableTerminalTracking') return true;
+                    if (key === 'terminalTrackingMode') return 'history';
                     return defaultValue;
                 }),
             };
@@ -351,7 +359,8 @@ describe('TerminalTracker - Enhanced Cross-Platform', () => {
             const mockConfig = {
                 get: jest.fn((key: string, defaultValue: any) => {
                     if (key === 'paused') return false;
-                    if (key === 'terminalTracking.enabled') return true;
+                    if (key === 'enableTerminalTracking') return true;
+                    if (key === 'terminalTrackingMode') return 'history';
                     return defaultValue;
                 }),
             };
@@ -379,7 +388,8 @@ describe('TerminalTracker - Enhanced Cross-Platform', () => {
             const mockConfig = {
                 get: jest.fn((key: string, defaultValue: any) => {
                     if (key === 'paused') return false;
-                    if (key === 'terminalTracking.enabled') return true;
+                    if (key === 'enableTerminalTracking') return true;
+                    if (key === 'terminalTrackingMode') return 'history';
                     return defaultValue;
                 }),
             };
@@ -477,7 +487,7 @@ describe('TerminalTracker - Enhanced Cross-Platform', () => {
         it('should use default value when terminal tracking enabled is not set', async () => {
             const mockConfig = {
                 get: jest.fn((key: string, defaultValue: any) => {
-                    if (key === 'terminalTracking.enabled') return defaultValue;
+                    if (key === 'enableTerminalTracking') return defaultValue;
                     if (key === 'paused') return false;
                     return defaultValue;
                 }),
@@ -488,7 +498,7 @@ describe('TerminalTracker - Enhanced Cross-Platform', () => {
 
             await terminalTracker.getTerminalHistory();
 
-            expect(mockConfig.get).toHaveBeenCalledWith('terminalTracking.enabled', true);
+            expect(mockConfig.get).toHaveBeenCalledWith('enableTerminalTracking', true);
         });
     });
 
@@ -497,7 +507,8 @@ describe('TerminalTracker - Enhanced Cross-Platform', () => {
             const mockConfig = {
                 get: jest.fn((key: string, defaultValue: any) => {
                     if (key === 'paused') return false;
-                    if (key === 'terminalTracking.enabled') return true;
+                    if (key === 'enableTerminalTracking') return true;
+                    if (key === 'terminalTrackingMode') return 'history';
                     return defaultValue;
                 }),
             };
@@ -522,7 +533,8 @@ describe('TerminalTracker - Enhanced Cross-Platform', () => {
             const mockConfig = {
                 get: jest.fn((key: string, defaultValue: any) => {
                     if (key === 'paused') return false;
-                    if (key === 'terminalTracking.enabled') return true;
+                    if (key === 'enableTerminalTracking') return true;
+                    if (key === 'terminalTrackingMode') return 'history';
                     return defaultValue;
                 }),
             };
@@ -549,7 +561,8 @@ describe('TerminalTracker - Enhanced Cross-Platform', () => {
             const mockConfig = {
                 get: jest.fn((key: string, defaultValue: any) => {
                     if (key === 'paused') return false;
-                    if (key === 'terminalTracking.enabled') return true;
+                    if (key === 'enableTerminalTracking') return true;
+                    if (key === 'terminalTrackingMode') return 'history';
                     return defaultValue;
                 }),
             };
@@ -572,7 +585,8 @@ describe('TerminalTracker - Enhanced Cross-Platform', () => {
             const mockConfig = {
                 get: jest.fn((key: string, defaultValue: any) => {
                     if (key === 'paused') return false;
-                    if (key === 'terminalTracking.enabled') return true;
+                    if (key === 'enableTerminalTracking') return true;
+                    if (key === 'terminalTrackingMode') return 'history';
                     return defaultValue;
                 }),
             };
@@ -601,7 +615,8 @@ describe('TerminalTracker - Enhanced Cross-Platform', () => {
             const mockConfig = {
                 get: jest.fn((key: string, defaultValue: any) => {
                     if (key === 'paused') return false;
-                    if (key === 'terminalTracking.enabled') return true;
+                    if (key === 'enableTerminalTracking') return true;
+                    if (key === 'terminalTrackingMode') return 'history';
                     return defaultValue;
                 }),
             };
@@ -672,7 +687,8 @@ describe('TerminalTracker - Enhanced Cross-Platform', () => {
             const mockConfig = {
                 get: jest.fn((key: string, defaultValue: any) => {
                     if (key === 'paused') return false;
-                    if (key === 'terminalTracking.enabled') return true;
+                    if (key === 'enableTerminalTracking') return true;
+                    if (key === 'terminalTrackingMode') return 'history';
                     return defaultValue;
                 }),
             };

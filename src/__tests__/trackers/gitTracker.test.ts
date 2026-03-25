@@ -86,11 +86,11 @@ describe('GitTracker', () => {
             expect(commits).toEqual([]);
         });
 
-        it.skip('should successfully retrieve and parse commits', async () => {
+        it('should successfully retrieve and parse commits', async () => {
             const mockGitOutput = `abc123def4567890123456789012345678901234|2024-01-15T10:30:00+00:00|Add new feature
 src/file1.ts
 src/file2.ts
-fed789cba01234567890123456789012345678901|2024-01-15T11:00:00+00:00|Fix bug
+fed789cba0123456789012345678901234567890|2024-01-15T11:00:00+00:00|Fix bug
 src/file3.ts`;
 
             // Mock git config to return user name
@@ -109,7 +109,7 @@ src/file3.ts`;
                 files: ['src/file1.ts', 'src/file2.ts']
             });
             expect(commits[1]).toEqual({
-                hash: 'fed789cba01234567890123456789012345678901',
+                hash: 'fed789cba0123456789012345678901234567890',
                 timestamp: '2024-01-15T11:00:00+00:00',
                 message: 'Fix bug',
                 files: ['src/file3.ts']
@@ -218,10 +218,10 @@ another invalid line`;
             expect(Array.isArray(commits)).toBe(true);
         });
 
-        it.skip('should handle Windows-style line endings', async () => {
+        it('should handle Windows-style line endings', async () => {
             const mockGitOutput = `abc123def4567890123456789012345678901234|2024-01-15T10:30:00+00:00|Test commit\r
 src/file1.ts\r
-fed789cba01234567890123456789012345678901|2024-01-15T11:00:00+00:00|Another commit\r
+fed789cba0123456789012345678901234567890|2024-01-15T11:00:00+00:00|Another commit\r
 src/file2.ts`;
 
             mockExec

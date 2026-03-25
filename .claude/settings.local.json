@@ -6,7 +6,8 @@
       "Bash(npm run:*)",
       "Bash(node:*)",
       "Bash(cd:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(ls *.md)"
     ]
   }
 }
