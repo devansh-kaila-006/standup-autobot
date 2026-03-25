@@ -225,7 +225,9 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Configure Settings
     const configureSettingsDisposable = vscode.commands.registerCommand('standup.configureSettings', async () => {
-        vscode.commands.executeCommand('workbench.action.openSettings', '@ext:standup-autobot.standup-autobot');
+        // Open settings filtered by extension ID
+        // This works in both development (F5) and production
+        vscode.commands.executeCommand('workbench.action.openSettings', '@ext:devansh-kaila-006.standup-autobot');
     });
 
     const copyTeamsDisposable = vscode.commands.registerCommand('standup.copyForTeams', async (text: string) => {
