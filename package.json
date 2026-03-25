@@ -2,13 +2,17 @@
   "name": "standup-autobot",
   "displayName": "Standup Autobot",
   "description": "Silently tracks developer activity and generates daily standup summaries using local LLMs.",
-  "version": "0.0.1",
+  "version": "2.0.0",
   "publisher": "devansh-kaila-006",
-  "license": "SEE LICENSE",
+  "license": "LICENSED",
   "repository": {
     "type": "git",
     "url": "https://github.com/devansh-kaila-006/standup-autobot"
   },
+  "bugs": {
+    "url": "https://github.com/devansh-kaila-006/standup-autobot/issues"
+  },
+  "homepage": "https://github.com/devansh-kaila-006/standup-autobot#readme",
   "keywords": [
     "standup",
     "productivity",
@@ -181,90 +185,6 @@
           "enum": ["en", "es", "fr", "de", "ja", "zh-CN", "zh-TW", "pt-BR", "ru", "ar"],
           "default": "en",
           "description": "Interface language"
-        },
-        "standup.jiraDomain": {
-          "type": "string",
-          "description": "Jira domain (e.g., company.atlassian.net)"
-        },
-        "standup.jiraProjectKey": {
-          "type": "string",
-          "description": "Default Jira project key"
-        },
-        "standup.azureOrganization": {
-          "type": "string",
-          "description": "Azure DevOps organization"
-        },
-        "standup.azureProject": {
-          "type": "string",
-          "description": "Azure DevOps project"
-        },
-        "standup.slackWebhookUrl": {
-          "type": "string",
-          "description": "Slack webhook URL"
-        },
-        "standup.teamsWebhookUrl": {
-          "type": "string",
-          "description": "Microsoft Teams webhook URL"
-        },
-        "standup.togglWorkspaceId": {
-          "type": "string",
-          "description": "Toggl workspace ID"
-        },
-        "standup.harvestAccountId": {
-          "type": "string",
-          "description": "Harvest account ID"
-        },
-        "standup.autoPostToSlack": {
-          "type": "boolean",
-          "default": false,
-          "description": "Automatically post standups to Slack"
-        },
-        "standup.autoPostToTeams": {
-          "type": "boolean",
-          "default": false,
-          "description": "Automatically post standups to Teams"
-        },
-        "standup.jiraDomain": {
-          "type": "string",
-          "description": "Jira domain (e.g., company.atlassian.net)"
-        },
-        "standup.jiraProjectKey": {
-          "type": "string",
-          "description": "Default Jira project key"
-        },
-        "standup.azureOrganization": {
-          "type": "string",
-          "description": "Azure DevOps organization"
-        },
-        "standup.azureProject": {
-          "type": "string",
-          "description": "Azure DevOps project"
-        },
-        "standup.slackWebhookUrl": {
-          "type": "string",
-          "description": "Slack webhook URL"
-        },
-        "standup.teamsWebhookUrl": {
-          "type": "string",
-          "description": "Microsoft Teams webhook URL"
-        },
-        "standup.togglWorkspaceId": {
-          "type": "string",
-          "description": "Toggl workspace ID"
-        },
-        "standup.harvestAccountId": {
-          "type": "string",
-          "description": "Harvest account ID"
-        },
-        "standup.autoPostToSlack": {
-          "type": "boolean",
-          "default": false,
-          "description": "Automatically post standups to Slack"
-        },
-        "standup.autoPostToTeams": {
-          "type": "boolean",
-          "default": false,
-          "description": "Automatically post standups to Teams"
         }
       }
     },

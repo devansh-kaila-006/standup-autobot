@@ -438,15 +438,12 @@ export class GitHubService {
                 path: urlObj.pathname + urlObj.search,
                 method: method,
                 headers: {
-                    'Authorization': `Bearer ${this.config.token}`,
+                    'Authorization': `Bearer ${this.config?.token || ''}`,
                     'Accept': 'application/vnd.github.v3+json',
                     'User-Agent': 'Standup-Autobot',
+                    ...(data && { 'Content-Type': 'application/json' }),
                 },
             };
-
-            if (data) {
-                options.headers['Content-Type'] = 'application/json';
-            }
 
             const req = https.request(options, (res) => {
                 let responseData = '';
@@ -499,7 +496,7 @@ export class GitHubService {
      * Get current user info
      */
     private async getCurrentUser(): Promise<any> {
-        const url = `${this.config.apiUrl}/user`;
+        const url = `${this.config?.apiUrl || 'https://api.github.com'}/user`;
         return await this.makeGitHubRequest(url, 'GET');
     }
 

@@ -609,8 +609,8 @@ export class HarvestService {
                 path: urlObj.pathname + urlObj.search,
                 method: method,
                 headers: {
-                    'Authorization': `Bearer ${this.config.accessToken}`,
-                    'Harvest-Account-Id': this.config.accountId,
+                    'Authorization': `Bearer ${this.config?.accessToken || ''}`,
+                    'Harvest-Account-Id': this.config?.accountId || '',
                     'User-Agent': 'Standup Autobot',
                     'Content-Type': 'application/json',
                 },

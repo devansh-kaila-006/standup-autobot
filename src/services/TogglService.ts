@@ -455,7 +455,7 @@ export class TogglService {
                 path: urlObj.pathname + urlObj.search,
                 method: method,
                 headers: {
-                    'Authorization': 'Basic ' + Buffer.from(this.config.apiToken + ':api_token').toString('base64'),
+                    'Authorization': 'Basic ' + Buffer.from((this.config?.apiToken || '') + ':api_token').toString('base64'),
                     'Content-Type': 'application/json',
                 },
             };
@@ -511,7 +511,7 @@ export class TogglService {
      * Get current user info
      */
     private async getCurrentUser(): Promise<any> {
-        const url = `${this.config.apiUrl}/api/v8/me`;
+        const url = `${this.config?.apiUrl || 'https://api.track.toggl.com'}/api/v8/me`;
         return await this.makeTogglRequest(url, 'GET');
     }
 
