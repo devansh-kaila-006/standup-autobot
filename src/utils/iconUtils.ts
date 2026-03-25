@@ -152,6 +152,159 @@ export class SVGIcons {
     }
 
     /**
+     * Clipboard/copy icon (replaces 📋)
+     */
+    static clipboard(): string {
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="8" height="4" x="8" y="2" rx="1" ry="1"/>
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+        </svg>`;
+    }
+
+    /**
+     * Thumbs up icon (replaces 👍)
+     */
+    static thumbsUp(): string {
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 10v12"/>
+            <path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H7"/>
+            <path d="M9 9.88V6a3 3 0 0 1 5.12-2.12"/>
+        </svg>`;
+    }
+
+    /**
+     * Comment/bubble icon (replaces 💬)
+     */
+    static comment(): string {
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>`;
+    }
+
+    /**
+     * Prohibited/blocked icon (replaces 🚫)
+     */
+    static prohibited(): string {
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="m4.93 4.93 14.14 14.14"/>
+        </svg>`;
+    }
+
+    /**
+     * Hospital/health icon (replaces 🏥)
+     */
+    static health(): string {
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 6v12"/>
+            <path d="M6 12h12"/>
+            <path d="M3 12a9 9 0 0 1 9-9 9 9 0 0 1 9 9"/>
+            <path d="M3 12a9 9 0 0 0 9 9 9 9 0 0 0 9-9"/>
+        </svg>`;
+    }
+
+    /**
+     * Download/export icon (replaces 📥)
+     */
+    static download(): string {
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>`;
+    }
+
+    /**
+     * Search/magnifier icon (replaces 🔍)
+     */
+    static search(): string {
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="m21 21-4.3-4.3"/>
+        </svg>`;
+    }
+
+    /**
+     * Document/file icon (replaces 📝)
+     */
+    static document(): string {
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+        </svg>`;
+    }
+
+    /**
+     * Light bulb icon (replaces 💡)
+     */
+    static lightbulb(): string {
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-1 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/>
+            <path d="M9 18h6"/>
+            <path d="M10 22h4"/>
+        </svg>`;
+    }
+
+    /**
+     * Globe icon (replaces 🌍)
+     */
+    static globe(): string {
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+            <path d="M2 12h20"/>
+        </svg>`;
+    }
+
+    /**
+     * Wrench/tool icon (replaces 🔧)
+     */
+    static wrench(): string {
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+        </svg>`;
+    }
+
+    /**
+     * Lock/security icon (replaces 🔒)
+     */
+    static lock(): string {
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>`;
+    }
+
+    /**
+     * Bug icon (for debugging)
+     */
+    static bug(): string {
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="8" height="8" x="8" y="8" rx="2"/>
+            <path d="M12 8V2"/>
+            <path d="M12 16v6"/>
+            <path d="M8 12H2"/>
+            <path d="M16 12h6"/>
+            <path d="m5 5 3 3"/>
+            <path d="m19 5-3 3"/>
+            <path d="m5 19 3-3"/>
+            <path d="m19 19-3-3"/>
+        </svg>`;
+    }
+
+    /**
+     * Terminal/code icon
+     */
+    static terminal(): string {
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 17 10 11 4 5"/>
+            <line x1="12" y1="19" x2="20" y2="19"/>
+        </svg>`;
+    }
+
+    /**
      * Get icon as HTML image tag
      */
     static asImg(svgString: string, alt: string, className?: string): string {
@@ -185,4 +338,18 @@ export const Icons = {
     celebration: () => SVGIcons.asImg(SVGIcons.celebration(), 'Celebration icon'),
     xmark: () => SVGIcons.asImg(SVGIcons.xmark(), 'X mark icon'),
     info: () => SVGIcons.asImg(SVGIcons.info(), 'Info icon'),
+    clipboard: () => SVGIcons.asImg(SVGIcons.clipboard(), 'Clipboard icon'),
+    thumbsUp: () => SVGIcons.asImg(SVGIcons.thumbsUp(), 'Thumbs up icon'),
+    comment: () => SVGIcons.asImg(SVGIcons.comment(), 'Comment icon'),
+    prohibited: () => SVGIcons.asImg(SVGIcons.prohibited(), 'Prohibited icon'),
+    health: () => SVGIcons.asImg(SVGIcons.health(), 'Health icon'),
+    download: () => SVGIcons.asImg(SVGIcons.download(), 'Download icon'),
+    search: () => SVGIcons.asImg(SVGIcons.search(), 'Search icon'),
+    document: () => SVGIcons.asImg(SVGIcons.document(), 'Document icon'),
+    lightbulb: () => SVGIcons.asImg(SVGIcons.lightbulb(), 'Light bulb icon'),
+    globe: () => SVGIcons.asImg(SVGIcons.globe(), 'Globe icon'),
+    wrench: () => SVGIcons.asImg(SVGIcons.wrench(), 'Wrench icon'),
+    lock: () => SVGIcons.asImg(SVGIcons.lock(), 'Lock icon'),
+    bug: () => SVGIcons.asImg(SVGIcons.bug(), 'Bug icon'),
+    terminal: () => SVGIcons.asImg(SVGIcons.terminal(), 'Terminal icon'),
 };

@@ -226,8 +226,6 @@ export class StandupCardProvider {
                     <div className="w-full max-w-lg relative rounded-xl shadow-lg overflow-hidden flex flex-col max-h-[90%] animate-fade-in"
                          style={{ backgroundColor: 'var(--vscode-editor-background)', border: '1px solid var(--vscode-panel-border)' }}>
 
-                        <div className="h-1 w-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
-
                         <div className="px-6 py-3 border-b flex justify-between items-center"
                              style={{ backgroundColor: 'var(--vscode-sideBarSectionHeader-background)', borderColor: 'var(--vscode-panel-border)' }}>
                             <div className="flex items-center gap-2">

@@ -201,7 +201,7 @@ export class Logger {
         for (const entry of this.logBuffer) {
             const icon = entry.level === LogLevel.ERROR ? Icons.xmark() :
                         entry.level === LogLevel.WARN ? Icons.warning() :
-                        entry.level === LogLevel.DEBUG ? '🔍' :
+                        entry.level === LogLevel.DEBUG ? Icons.search() :
                         Icons.info();
 
             lines.push(`### ${icon} ${entry.levelName} - ${entry.timestamp}`);

@@ -326,8 +326,8 @@ ${report.recommendations.map(r => `  • ${r}`).join('\n')}
                         <h1>${SVGIcons.chart()} Analytics Dashboard</h1>
                         <div class="actions">
                             <button onclick="generateSprint()">${SVGIcons.trendingUp()} Sprint Summary</button>
-                            <button onclick="getHealth()">🏥 Health Report</button>
-                            <button onclick="exportCSV()">📥 Export CSV</button>
+                            <button onclick="getHealth()">${SVGIcons.health()} Health Report</button>
+                            <button onclick="exportCSV()">${SVGIcons.download()} Export CSV</button>
                             <button onclick="refresh()">${SVGIcons.refresh()} Refresh</button>
                         </div>
                     </div>
