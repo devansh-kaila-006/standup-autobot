@@ -7,7 +7,11 @@
       "Bash(node:*)",
       "Bash(cd:*)",
       "Bash(npx tsc:*)",
-      "Bash(ls *.md)"
+      "Bash(ls *.md)",
+      "Bash(find /c/Users/devan/OneDrive/Desktop/standup-autobot/out -type f -name *.js)",
+      "Bash(grep -v \"^\\\\.$\")",
+      "Bash(xargs basename:*)",
+      "Bash(find /c/Users/devan/OneDrive/Desktop/standup-autobot -maxdepth 3 -type f \\\\\\(-name *.tsbuildinfo -o -name *.buildinfo -o -name *.map \\\\\\))"
     ]
   }
 }
