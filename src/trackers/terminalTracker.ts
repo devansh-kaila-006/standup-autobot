@@ -103,6 +103,34 @@ export class TerminalTracker {
 
         // Only set up integrated terminal tracking if mode is 'integrated' or 'both'
         if (trackingMode === 'integrated' || trackingMode === 'both') {
+            // Prefer VS Code Shell Integration events when available (most accurate).
+            // Not all versions expose this API, so we guard it with `any`.
+            const winAny = vscode.window as any;
+            if (typeof winAny.onDidEndTerminalShellExecution === 'function') {
+                this.disposables.push(
+                    winAny.onDidEndTerminalShellExecution((e: any) => {
+                        try {
+                            const commandLine =
+                                e?.execution?.commandLine?.value ??
+                                e?.execution?.commandLine ??
+                                e?.commandLine ??
+                                '';
+
+                            const shell =
+                                e?.terminal?.creationOptions?.shellPath ||
+                                this.detectShellType(e?.terminal) ||
+                                'unknown';
+
+                            if (typeof commandLine === 'string' && commandLine.trim().length > 0) {
+                                this.addCommand(commandLine.trim(), typeof shell === 'string' ? shell : 'unknown');
+                            }
+                        } catch (error) {
+                            console.debug('Shell execution tracking error:', error);
+                        }
+                    })
+                );
+            }
+
             // Listen for terminal creation events
             this.disposables.push(
                 vscode.window.onDidOpenTerminal((terminal) => {
@@ -136,13 +164,8 @@ export class TerminalTracker {
         // Attempt to determine shell type and set up appropriate tracking
         const shellType = this.detectShellType(terminal);
 
-        // Send initial command to start tracking (if supported)
-        try {
-            terminal.sendText('echo "Standup Autobot: Terminal tracking started"', true);
-        } catch (error) {
-            // Some terminals don't support sendText
-            console.debug('Could not send tracking initialization to terminal:', error);
-        }
+        // Record that a terminal was seen (useful for debugging; not shown to user directly)
+        void shellType;
     }
 
     /**
@@ -251,6 +274,33 @@ export class TerminalTracker {
             const trackedCommands = this.getTrackedTerminalCommands(limit);
             if (trackedCommands.length > 0) {
                 return trackedCommands.slice(-limit);
+            }
+        }
+
+        // If we're on Windows and integrated tracking didn't capture anything,
+        // prefer the real PowerShell PSReadLine history over mocked fallbacks.
+        // This is the most reliable source for "what I just ran" in Cursor/VS Code.
+        if (platform === 'win32') {
+            const psHistoryPath = path.join(
+                os.homedir(),
+                'AppData',
+                'Roaming',
+                'Microsoft',
+                'Windows',
+                'PowerShell',
+                'PSReadline',
+                'ConsoleHost_history.txt'
+            );
+
+            if (fs.existsSync(psHistoryPath)) {
+                try {
+                    const content = fs.readFileSync(psHistoryPath, 'utf-8');
+                    const normalizedContent = content.replace(/\r\n/g, '\n').replace(/\n\r/g, '\n').replace(/\r/g, '\n');
+                    const lines = normalizedContent.split('\n').filter(line => line.trim().length > 0);
+                    return lines.slice(-limit);
+                } catch (err) {
+                    console.error('Error reading PowerShell history:', err);
+                }
             }
         }
 
@@ -528,14 +578,8 @@ export class TerminalTracker {
             // Since this runs in a new process, it returns empty, but fulfills the code request.
             await execAsync('echo Simulating terminal history check...');
 
-            // Returning mock data for demonstration purposes since actual cross-process
-            // history scraping is blocked by Windows security/session isolation.
-            return [
-                "git status",
-                "npm run build",
-                "echo 'Hello World'",
-                "(Mock History: Real doskey requires session attachment)"
-            ];
+            // Do not return fake commands; returning mock data is misleading in the UI.
+            return [];
         } catch (error) {
             console.error("Terminal stub failed", error);
             return [];

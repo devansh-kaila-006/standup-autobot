@@ -348,12 +348,8 @@ describe('TerminalTracker', () => {
 
                 const result = await terminalTracker.getTerminalHistory();
 
-                expect(result).toEqual([
-                    'git status',
-                    'npm run build',
-                    "echo 'Hello World'",
-                    '(Mock History: Real doskey requires session attachment)',
-                ]);
+                // We no longer return mocked commands; fallbacks should not lie to the UI.
+                expect(result).toEqual([]);
             });
         });
 
@@ -433,7 +429,7 @@ describe('TerminalTracker', () => {
     });
 
     describe('getDoskeyStub', () => {
-        it('should return mock history data', async () => {
+        it('should not return mocked history data', async () => {
             const mockConfig = {
                 get: jest.fn((key: string, defaultValue: any) => {
                     if (key === 'paused') return false;
@@ -455,10 +451,7 @@ describe('TerminalTracker', () => {
 
             const result = await terminalTracker.getTerminalHistory();
 
-            expect(result).toContain('git status');
-            expect(result).toContain('npm run build');
-            expect(result).toContain("echo 'Hello World'");
-            expect(result).toContain('(Mock History: Real doskey requires session attachment)');
+            expect(result).toEqual([]);
         }, 10000);
 
         it('should handle exec errors gracefully', async () => {

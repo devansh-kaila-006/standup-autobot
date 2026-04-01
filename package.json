@@ -2,7 +2,7 @@
   "name": "standup-autobot",
   "displayName": "Standup Autobot",
   "description": "Silently tracks developer activity and generates daily standup summaries using local LLMs.",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "publisher": "devansh-kaila-006",
   "license": "LICENSED",
   "repository": {
@@ -315,13 +315,13 @@
       },
       {
         "command": "standup.showAnalytics",
-        "key": "ctrl+alt+a",
-        "mac": "cmd+alt+a"
+        "key": "ctrl+alt+d",
+        "mac": "cmd+alt+d"
       },
       {
         "command": "standup.dataAudit",
-        "key": "ctrl+alt+d",
-        "mac": "cmd+alt+d"
+        "key": "ctrl+alt+a",
+        "mac": "cmd+alt+a"
       },
       {
         "command": "standup.showNotifications",
@@ -334,15 +334,17 @@
         "mac": "cmd+alt+,"
       }
     ],
-    "activityBar": [
-      {
-        "id": "standupAutobot.activityBar",
-        "title": "Standup Autobot",
-        "icon": "media/icons/dashboard.svg"
-      }
-    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "standupAutobot-activitybar",
+          "title": "Standup Autobot",
+          "icon": "media/icons/dashboard.svg"
+        }
+      ]
+    },
     "views": {
-      "standupAutobot.activityBar": [
+      "standupAutobot-activitybar": [
         {
           "id": "standupAutobot.sidePanel",
           "name": "Dashboard",

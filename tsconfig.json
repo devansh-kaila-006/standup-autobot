@@ -30,6 +30,7 @@
   "exclude": [
     "node_modules",
     ".vscode-test",
+    "out",
     "**/__tests__",
     "**/__mocks__"
   ]

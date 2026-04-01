@@ -41,7 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Weekly Digests**: Automated AI-generated Friday summaries
 - **Smart Scheduling**: Contextual reminders at optimal times
 - **Multi-Language Support**: 10 locales with proper date/time/number formatting
-- **Keyboard Shortcuts**: 12 configurable keyboard shortcuts (added Ctrl+Alt+B for Dashboard)
+- **Keyboard Shortcuts**: 12 configurable keyboard shortcuts (Ctrl+Alt+D for Analytics Dashboard)
 - **Accessibility Features**: WCAG 2.1 AA compliance, screen reader support, ARIA labels
 - **Data Audit Panel**: Preview raw data before AI processing
 - **Enhanced Privacy**: Configurable ignore patterns, automatic data cleanup

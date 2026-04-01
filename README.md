@@ -165,10 +165,9 @@ Create a `.standup.json` in your workspace root for project-specific settings:
 | `Ctrl+Alt+C` | Copy to Clipboard |
 | `Ctrl+Alt+E` | Export Standup |
 | `Ctrl+Alt+H` | Show History |
-| `Ctrl+Alt+A` | Show Analytics |
-| `Ctrl+Alt+D` | Data Audit Panel |
+| `Ctrl+Alt+A` | Data Audit Panel |
+| `Ctrl+Alt+D` | Show Analytics (Dashboard) |
 | `Ctrl+Alt+N` | Show Notifications |
-| `Ctrl+Alt+B` | Show Dashboard (NEW!) |
 | `Ctrl+Alt+R` | Mark Notifications Read |
 | `Ctrl+Alt+T` | Toggle Timer |
 | `Ctrl+Alt+,` | Open Settings |

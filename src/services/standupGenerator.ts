@@ -53,16 +53,20 @@ import { Icons } from '../utils/iconUtils';
 export class StandupGenerator {
   private readonly baseUrl: string;
   private readonly model: string;
+  private readonly isExplicitEndpoint: boolean;
 
   constructor(config: StandupGeneratorConfig = {}) {
-    this.baseUrl = config.baseUrl || 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent';
-    this.model = config.model || 'gemini-3-flash-preview';
-  }
+    // v1beta is required for Gemini 2.5+ models; v1 does not expose them
+    this.baseUrl = config.baseUrl || 'https://generativelanguage.googleapis.com/v1beta';
+    this.model = config.model || 'gemini-2.5-flash';
+    this.isExplicitEndpoint = typeof config.baseUrl === 'string' && config.baseUrl.trim().length > 0;
+}
 
   /**
    * Generates the standup summary based on developer activity.
    * @param data The JSON data gathered from VS Code.
    * @param apiKey The Google Gemini API key.
+   * 
    * @param settings The standup generation settings (tone, language, custom prompt).
    * @param durationHours The lookback duration in hours.
    * @returns A Markdown string containing the standup.
@@ -106,29 +110,37 @@ export class StandupGenerator {
         return cachedResponse;
       }
 
-      // Make the API call
-      const response = await fetch(this.baseUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey,
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: prompt
-                }
-              ]
+      const makeGenerateRequest = async (modelName: string) => {
+        const url = this.isExplicitEndpoint
+          ? this.baseUrl
+          : `${this.baseUrl.replace(/\/$/, '')}/models/${encodeURIComponent(modelName)}:generateContent`;
+
+        return await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey,
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text: prompt
+                  }
+                ]
+              }
+            ],
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 2048,
             }
-          ],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 2048,
-          }
-        }),
-      });
+          }),
+        });
+      };
+
+      // Make the API call
+      const response = await makeGenerateRequest(this.model);
 
       if (!response.ok) {
         const errorJson: any = await response.json().catch(() => ({}));
@@ -200,14 +212,18 @@ export class StandupGenerator {
 You are a senior developer's productivity assistant. Synthesize the following raw VS Code activity logs into a Daily Standup update for Slack.
 
 ### Instructions:
-1. **Focus strongly on the 'Active Files'** data to deduce what feature was being built.
-2. **Correlate Git commits with the Active Files** to show what was finished vs what is currently in progress.
-3. **List any heavy terminal commands** as research or environment setup.
-4. **Format as:** [Completed], [In Progress], and [Notes/Blockers]. 
-5. **CRITICAL: Do not use any emojis in the output.**
-6. **Tone:** ${toneInstructions[settings.tone] || toneInstructions.casual}
-7. **Output Language:** ${settings.outputLanguage}
-${settings.customPrompt ? `8. **Custom Instruction:** ${settings.customPrompt}` : ''}
+1. **Be strictly factual and grounded in the data below.**
+   - Do NOT guess intent.
+   - Do NOT say "it looks like", "likely", "suggests", "primarily focused", etc.
+   - If the data is insufficient to infer something, say "Insufficient data to determine."
+2. **Use ONLY the provided sections** (Top Edited Files, Recent Git Commits, Terminal Commands).
+3. **Format exactly as:** [Completed], [In Progress], and [Notes/Blockers].
+4. **If there are no commits, say so plainly.** Do not imply completions.
+5. **Terminal commands:** list them as-is; don't interpret them as "setup" unless obvious from the command itself.
+6. **CRITICAL: Do not use any emojis in the output.**
+7. **Tone:** ${toneInstructions[settings.tone] || toneInstructions.casual}
+8. **Output Language:** ${settings.outputLanguage}
+${settings.customPrompt ? `9. **Custom Instruction:** ${settings.customPrompt}` : ''}
 
 ### Analysis Context:
 ${tagsStr}

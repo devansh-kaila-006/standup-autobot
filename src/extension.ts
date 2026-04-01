@@ -32,6 +32,9 @@ export function activate(context: vscode.ExtensionContext) {
     const exporterService = new ExporterService();
     const historyService = new HistoryService(context);
 
+    // Initialize terminal tracking (integrated/history depending on settings)
+    terminalTracker.initialize();
+
     // --- Phase 5: Initialize integration services ---
     const jiraService = new JiraService(context);
     const slackService = new SlackService(context);
