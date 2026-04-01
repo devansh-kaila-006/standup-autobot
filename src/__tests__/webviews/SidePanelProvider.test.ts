@@ -191,7 +191,7 @@ describe('SidePanelProvider', () => {
         });
 
         it('should have correct viewType', () => {
-            expect(SidePanelProvider.viewType).toBe('standupAutobot.sidePanel');
+            expect(SidePanelProvider.viewType).toBe('standupAutobot.dashboard');
         });
 
         it('should setup theme change listener', () => {
@@ -205,6 +205,7 @@ describe('SidePanelProvider', () => {
 
             expect(mockWebviewView.webview.options).toEqual({
                 enableScripts: true,
+                enableCommandUris: true,
                 localResourceRoots: expect.any(Array),
             });
         });
@@ -362,6 +363,181 @@ describe('SidePanelProvider', () => {
                 await (mockWebviewView as any).messageCallback(message);
 
                 expect(refreshSpy).toHaveBeenCalled();
+            });
+        });
+
+        // Views & Analytics
+        describe('dataAudit', () => {
+            it('should execute data audit command', async () => {
+                const message = { command: 'dataAudit' };
+
+                await (mockWebviewView as any).messageCallback(message);
+
+                expect(vscode.commands.executeCommand).toHaveBeenCalledWith('standup.dataAudit');
+            });
+        });
+
+        describe('previewData', () => {
+            it('should execute preview data command', async () => {
+                const message = { command: 'previewData' };
+
+                await (mockWebviewView as any).messageCallback(message);
+
+                expect(vscode.commands.executeCommand).toHaveBeenCalledWith('standup.previewData');
+            });
+        });
+
+        // Export commands
+        describe('export', () => {
+            it('should execute export command', async () => {
+                const message = { command: 'export' };
+
+                await (mockWebviewView as any).messageCallback(message);
+
+                expect(vscode.commands.executeCommand).toHaveBeenCalledWith('standup.export');
+            });
+        });
+
+        describe('exportToNotion', () => {
+            it('should execute export to notion command', async () => {
+                const message = { command: 'exportToNotion' };
+
+                await (mockWebviewView as any).messageCallback(message);
+
+                expect(vscode.commands.executeCommand).toHaveBeenCalledWith('standup.exportToNotion');
+            });
+        });
+
+        describe('exportToJira', () => {
+            it('should execute export to jira command', async () => {
+                const message = { command: 'exportToJira' };
+
+                await (mockWebviewView as any).messageCallback(message);
+
+                expect(vscode.commands.executeCommand).toHaveBeenCalledWith('standup.exportToJira');
+            });
+        });
+
+        describe('generateWeeklyDigest', () => {
+            it('should execute generate weekly digest command', async () => {
+                const message = { command: 'generateWeeklyDigest' };
+
+                await (mockWebviewView as any).messageCallback(message);
+
+                expect(vscode.commands.executeCommand).toHaveBeenCalledWith('standup.generateWeeklyDigest');
+            });
+        });
+
+        // Configuration commands
+        describe('configureSettings', () => {
+            it('should execute configure settings command', async () => {
+                const message = { command: 'configureSettings' };
+
+                await (mockWebviewView as any).messageCallback(message);
+
+                expect(vscode.commands.executeCommand).toHaveBeenCalledWith('standup.configureSettings');
+            });
+        });
+
+        describe('setApiKey', () => {
+            it('should execute set api key command', async () => {
+                const message = { command: 'setApiKey' };
+
+                await (mockWebviewView as any).messageCallback(message);
+
+                expect(vscode.commands.executeCommand).toHaveBeenCalledWith('standup.setApiKey');
+            });
+        });
+
+        describe('setOpenaiApiKey', () => {
+            it('should execute set openai api key command', async () => {
+                const message = { command: 'setOpenaiApiKey' };
+
+                await (mockWebviewView as any).messageCallback(message);
+
+                expect(vscode.commands.executeCommand).toHaveBeenCalledWith('standup.setOpenaiApiKey');
+            });
+        });
+
+        describe('setClaudeApiKey', () => {
+            it('should execute set claude api key command', async () => {
+                const message = { command: 'setClaudeApiKey' };
+
+                await (mockWebviewView as any).messageCallback(message);
+
+                expect(vscode.commands.executeCommand).toHaveBeenCalledWith('standup.setClaudeApiKey');
+            });
+        });
+
+        describe('setNotionToken', () => {
+            it('should execute set notion token command', async () => {
+                const message = { command: 'setNotionToken' };
+
+                await (mockWebviewView as any).messageCallback(message);
+
+                expect(vscode.commands.executeCommand).toHaveBeenCalledWith('standup.setNotionToken');
+            });
+        });
+
+        describe('setJiraToken', () => {
+            it('should execute set jira token command', async () => {
+                const message = { command: 'setJiraToken' };
+
+                await (mockWebviewView as any).messageCallback(message);
+
+                expect(vscode.commands.executeCommand).toHaveBeenCalledWith('standup.setJiraToken');
+            });
+        });
+
+        // Integration test commands
+        describe('testJiraConnection', () => {
+            it('should execute test jira connection command', async () => {
+                const message = { command: 'testJiraConnection' };
+
+                await (mockWebviewView as any).messageCallback(message);
+
+                expect(vscode.commands.executeCommand).toHaveBeenCalledWith('standup.testJiraConnection');
+            });
+        });
+
+        describe('testGitHubConnection', () => {
+            it('should execute test github connection command', async () => {
+                const message = { command: 'testGitHubConnection' };
+
+                await (mockWebviewView as any).messageCallback(message);
+
+                expect(vscode.commands.executeCommand).toHaveBeenCalledWith('standup.testGitHubConnection');
+            });
+        });
+
+        describe('testSlackConnection', () => {
+            it('should execute test slack connection command', async () => {
+                const message = { command: 'testSlackConnection' };
+
+                await (mockWebviewView as any).messageCallback(message);
+
+                expect(vscode.commands.executeCommand).toHaveBeenCalledWith('standup.testSlackConnection');
+            });
+        });
+
+        // Notification commands
+        describe('showNotifications', () => {
+            it('should execute show notifications command', async () => {
+                const message = { command: 'showNotifications' };
+
+                await (mockWebviewView as any).messageCallback(message);
+
+                expect(vscode.commands.executeCommand).toHaveBeenCalledWith('standup.showNotifications');
+            });
+        });
+
+        describe('markNotificationsRead', () => {
+            it('should execute mark notifications read command', async () => {
+                const message = { command: 'markNotificationsRead' };
+
+                await (mockWebviewView as any).messageCallback(message);
+
+                expect(vscode.commands.executeCommand).toHaveBeenCalledWith('standup.markNotificationsRead');
             });
         });
 

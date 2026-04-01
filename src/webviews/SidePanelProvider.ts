@@ -28,7 +28,7 @@ export interface ActivityData {
 }
 
 export class SidePanelProvider {
-    public static readonly viewType = 'standupAutobot.sidePanel';
+    public static readonly viewType = 'standupAutobot.dashboard';
 
     private _view?: vscode.WebviewView;
     private themeManager: ThemeManager;
@@ -69,13 +69,16 @@ export class SidePanelProvider {
 
         webviewView.webview.options = {
             enableScripts: true,
+            enableCommandUris: true,
             localResourceRoots: [
                 vscode.Uri.joinPath(this.extensionUri, 'media')
             ]
         };
 
-        // Set initial HTML
-        this.setInitialHtml(webviewView.webview);
+        // Set initial HTML asynchronously
+        this.setInitialHtml(webviewView.webview).catch(error => {
+            console.error('Failed to set initial HTML:', error);
+        });
 
         // Handle messages from webview
         webviewView.webview.onDidReceiveMessage(async (message) => {
@@ -91,6 +94,7 @@ export class SidePanelProvider {
      */
     private async handleMessage(message: any) {
         switch (message.command) {
+            // Main Actions
             case 'generateStandup':
                 await vscode.commands.executeCommand('standup.generate');
                 break;
@@ -101,12 +105,75 @@ export class SidePanelProvider {
             case 'copyToClipboard':
                 await vscode.commands.executeCommand('standup.copyToClipboard');
                 break;
+
+            // Views & Analytics
             case 'viewHistory':
                 await vscode.commands.executeCommand('standup.viewHistory');
                 break;
             case 'viewAnalytics':
                 await vscode.commands.executeCommand('standup.viewAnalytics');
                 break;
+            case 'dataAudit':
+                await vscode.commands.executeCommand('standup.dataAudit');
+                break;
+            case 'previewData':
+                await vscode.commands.executeCommand('standup.previewData');
+                break;
+
+            // Export
+            case 'export':
+                await vscode.commands.executeCommand('standup.export');
+                break;
+            case 'exportToNotion':
+                await vscode.commands.executeCommand('standup.exportToNotion');
+                break;
+            case 'exportToJira':
+                await vscode.commands.executeCommand('standup.exportToJira');
+                break;
+            case 'generateWeeklyDigest':
+                await vscode.commands.executeCommand('standup.generateWeeklyDigest');
+                break;
+
+            // Configuration
+            case 'configureSettings':
+                await vscode.commands.executeCommand('standup.configureSettings');
+                break;
+            case 'setApiKey':
+                await vscode.commands.executeCommand('standup.setApiKey');
+                break;
+            case 'setOpenaiApiKey':
+                await vscode.commands.executeCommand('standup.setOpenaiApiKey');
+                break;
+            case 'setClaudeApiKey':
+                await vscode.commands.executeCommand('standup.setClaudeApiKey');
+                break;
+            case 'setNotionToken':
+                await vscode.commands.executeCommand('standup.setNotionToken');
+                break;
+            case 'setJiraToken':
+                await vscode.commands.executeCommand('standup.setJiraToken');
+                break;
+
+            // Integration Tests
+            case 'testJiraConnection':
+                await vscode.commands.executeCommand('standup.testJiraConnection');
+                break;
+            case 'testGitHubConnection':
+                await vscode.commands.executeCommand('standup.testGitHubConnection');
+                break;
+            case 'testSlackConnection':
+                await vscode.commands.executeCommand('standup.testSlackConnection');
+                break;
+
+            // Notifications
+            case 'showNotifications':
+                await vscode.commands.executeCommand('standup.showNotifications');
+                break;
+            case 'markNotificationsRead':
+                await vscode.commands.executeCommand('standup.markNotificationsRead');
+                break;
+
+            // Data refresh
             case 'requestData':
                 // Initial data request
                 this.refresh();
@@ -134,7 +201,38 @@ export class SidePanelProvider {
      * Set initial HTML (async wrapper)
      */
     private async setInitialHtml(webview: vscode.Webview) {
-        webview.html = await this.getHtmlForWebview(webview);
+        try {
+            console.log('SidePanel: Setting initial HTML...');
+            webview.html = await this.getHtmlForWebview(webview);
+            console.log('SidePanel: Initial HTML set successfully');
+        } catch (error) {
+            console.error('SidePanel: Failed to set initial HTML:', error);
+            // Set a simple error message in the webview
+            webview.html = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <style>
+                        body {
+                            font-family: var(--vscode-font-family);
+                            padding: 20px;
+                            color: var(--vscode-foreground);
+                        }
+                        .error {
+                            color: var(--vscode-errorForeground);
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h2>Standup Dashboard</h2>
+                    <p class="error">Failed to load dashboard. Please try again.</p>
+                    <p><small>Check the developer console for details.</small></p>
+                </body>
+                </html>
+            `;
+        }
     }
 
     /**
@@ -434,6 +532,53 @@ export class SidePanelProvider {
             copy: () => <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>,
+            settings: () => <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 1v6m0 6v6"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0 2 2 0 0 1 2.83-.06l.06-.06a1.65 1.65 0 0 0 1.82-.33H9a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83 2 2 0 0 1 .06.06a1.65 1.65 0 0 0 .33 1.82V9a1.65 1.65 0 0 0-.33 1.82l-.06.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0 2 2 0 0 1-.06.06a1.65 1.65 0 0 0-1.82.33H15a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83 2 2 0 0 1-.06.06a1.65 1.65 0 0 0-.33-1.82V15z"/>
+            </svg>,
+            export: () => <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>,
+            bell: () => <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 8A6 6 0 0 0 6 2c0 6-6 12-6 12 0 0 0-6 6 6 6 0 0 0 6-6c0-6 6-12 6-12 0 0 0-6 6 6 6 0 0 0 6 6z"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                <path d="M18.63 13A17.89 17.89 0 0 1 18 8"/>
+            </svg>,
+            key: () => <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="7" y="7" width="3" height="3" rx="1"/>
+                <rect x="14" y="7" width="3" height="3" rx="1"/>
+                <rect x="7" y="14" width="3" height="3" rx="1"/>
+                <rect x="14" y="14" width="3" height="3" rx="1"/>
+            </svg>,
+            chevronDown: () => <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="6 9 12 15 18 9"/>
+            </svg>,
+            chevronUp: () => <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="18 15 12 9 6 15"/>
+            </svg>,
+            cloud: () => <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 10h-1.26A8 8 0 0 0 9 20h9a5 5 0 0 0 5-5v-5a8 8 0 0 0-5-5"/>
+                <line x1="12" y1="13" x2="12" y2="11"/>
+            </svg>,
+            database: () => <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+                <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3"/>
+            </svg>,
+            check: () => <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="20 6 9 17 4 12"/>
+            </svg>,
+            refresh: () => <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="1 4 1 10 1 20"/>
+                <path d="M23 20v-7"/>
+                <path d="M16.2 15.6a2 2 0 0 1 .58 1.42l5 5a2 2 0 0 1 2.82 0l.76-.71"/>
+            </svg>,
+            shield: () => <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 22s8-4 8-10V3l-10-10v9c0 6 8 10 8 10z"/>
             </svg>
         };
 
@@ -443,6 +588,7 @@ export class SidePanelProvider {
             const [topFiles, setTopFiles] = useState(${JSON.stringify(activityData.topFiles)});
             const [commits, setCommits] = useState(${JSON.stringify(activityData.commits)});
             const [commands, setCommands] = useState(${JSON.stringify(activityData.commands)});
+            const [expandedSection, setExpandedSection] = React.useState(null);
 
             useEffect(() => {
                 const handleMessage = (event) => {
@@ -526,7 +672,9 @@ export class SidePanelProvider {
 
                     {/* Quick Actions */}
                     <div className="quick-actions">
-                        <div className="quick-actions-title">Quick Actions</div>
+                        <div className="quick-actions-title">Commands</div>
+
+                        {/* Generate Standup - Always visible */}
                         <button
                             onClick={handleGenerateStandup}
                             className="action-button primary"
@@ -535,30 +683,101 @@ export class SidePanelProvider {
                             <Icons.pulse />
                             Generate Standup
                         </button>
-                        <button
-                            onClick={handleCopyToClipboard}
-                            className="action-button secondary"
-                            aria-label="Copy last standup to clipboard"
-                        >
-                            <Icons.copy />
-                            Copy to Clipboard
-                        </button>
-                        <button
-                            onClick={handleViewHistory}
-                            className="action-button secondary"
-                            aria-label="View standup history"
-                        >
-                            <Icons.history />
-                            View History
-                        </button>
-                        <button
-                            onClick={handleViewAnalytics}
-                            className="action-button secondary"
-                            aria-label="View analytics dashboard"
-                        >
-                            <Icons.chart />
-                            View Analytics
-                        </button>
+
+                        {/* Collapsible Command Sections */}
+                        {(() => {
+                            const toggleSection = (section) => {
+                                setExpandedSection(expandedSection === section ? null : section);
+                            };
+
+                            const CommandButton = ({ label, command, icon: Icon, primary = false }) => (
+                                <button
+                                    onClick={() => vscode.postMessage({ command })}
+                                    className={primary ? 'primary' : 'secondary'}
+                                    aria-label={label}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 'var(--spacing-sm)',
+                                        width: '100%',
+                                        marginBottom: 'var(--spacing-xs)'
+                                    }}
+                                >
+                                    <Icon />
+                                    <span style={{ fontSize: '0.75rem' }}>{label}</span>
+                                </button>
+                            );
+
+                            const Section = ({ title, icon: Icon, children, id }) => (
+                                <div style={{ marginBottom: 'var(--spacing-md)' }}>
+                                    <div
+                                        onClick={() => toggleSection(id)}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            cursor: 'pointer',
+                                            padding: 'var(--spacing-sm)',
+                                            backgroundColor: 'var(--card-color)',
+                                            border: '1px solid var(--border-color)',
+                                            borderRadius: 'var(--border-radius-sm)',
+                                            userSelect: 'none'
+                                        }}
+                                    >
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+                                            <Icon />
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary-color)' }}>
+                                                {title}
+                                            </span>
+                                        </div>
+                                        {expandedSection === id ? <Icons.chevronUp /> : <Icons.chevronDown />}
+                                    </div>
+                                    {expandedSection === id && (
+                                        <div style={{ marginTop: 'var(--spacing-xs)' }}>
+                                            {children}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+
+                            return (
+                                <>
+                                    <Section title="Views & Analytics" icon={Icons.chart} id="views">
+                                        <CommandButton label="View History" command="viewHistory" icon={Icons.history} />
+                                        <CommandButton label="View Analytics" command="viewAnalytics" icon={Icons.chart} />
+                                        <CommandButton label="Data Audit" command="dataAudit" icon={Icons.database} />
+                                        <CommandButton label="Preview Data" command="previewData" icon={Icons.database} />
+                                    </Section>
+
+                                    <Section title="Export" icon={Icons.export} id="export">
+                                        <CommandButton label="Copy to Clipboard" command="copyToClipboard" icon={Icons.copy} />
+                                        <CommandButton label="Export to Notion" command="exportToNotion" icon={Icons.cloud} />
+                                        <CommandButton label="Export to Jira" command="exportToJira" icon={Icons.shield} />
+                                        <CommandButton label="Generate Weekly Digest" command="generateWeeklyDigest" icon={Icons.file} />
+                                    </Section>
+
+                                    <Section title="Configuration" icon={Icons.settings} id="config">
+                                        <CommandButton label="Configure Settings" command="configureSettings" icon={Icons.settings} />
+                                        <CommandButton label="Set Gemini API Key" command="setApiKey" icon={Icons.key} />
+                                        <CommandButton label="Set OpenAI API Key" command="setOpenaiApiKey" icon={Icons.key} />
+                                        <CommandButton label="Set Claude API Key" command="setClaudeApiKey" icon={Icons.key} />
+                                        <CommandButton label="Set Notion Token" command="setNotionToken" icon={Icons.key} />
+                                        <CommandButton label="Set Jira Token" command="setJiraToken" icon={Icons.key} />
+                                    </Section>
+
+                                    <Section title="Integrations" icon={Icons.cloud} id="integrations">
+                                        <CommandButton label="Test Jira Connection" command="testJiraConnection" icon={Icons.check} />
+                                        <CommandButton label="Test GitHub Connection" command="testGitHubConnection" icon={Icons.check} />
+                                        <CommandButton label="Test Slack Connection" command="testSlackConnection" icon={Icons.check} />
+                                    </Section>
+
+                                    <Section title="Notifications" icon={Icons.bell} id="notifications">
+                                        <CommandButton label="Show Notifications" command="showNotifications" icon={Icons.bell} />
+                                        <CommandButton label="Mark All Read" command="markNotificationsRead" icon={Icons.check} />
+                                    </Section>
+                                </>
+                            );
+                        })()}
                     </div>
 
                     {/* Today's Activity */}
@@ -661,5 +880,12 @@ export class SidePanelProvider {
         this.themeManager.dispose();
         this.accessibilityManager.dispose();
         this.i18nService.dispose();
+    }
+
+    /**
+     * Get current view instance (for debugging)
+     */
+    public getView(): vscode.WebviewView | undefined {
+        return this._view;
     }
 }

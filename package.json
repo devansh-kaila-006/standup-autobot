@@ -356,7 +356,7 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
+    "compile": "tsc -p ./ --incremental false",
     "watch": "tsc -watch -p ./",
     "test": "jest",
     "test:watch": "jest --watch",
