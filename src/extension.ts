@@ -50,6 +50,8 @@ export function activate(context: vscode.ExtensionContext) {
         context,
         context.extensionUri
     );
+
+    // Register Dashboard in main sidebar (Explorer section)
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(
             SidePanelProvider.viewType,

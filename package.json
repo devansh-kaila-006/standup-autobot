@@ -334,27 +334,28 @@
         "mac": "cmd+alt+,"
       }
     ],
-    "activityBar": [
-      {
-        "id": "standupAutobot.activityBar",
-        "title": "Standup Autobot",
-        "icon": "media/icons/dashboard.svg"
-      }
-    ],
-    "views": {
-      "standupAutobot.activityBar": [
+    "viewsContainers": {
+      "activitybar": [
         {
-          "id": "standupAutobot.sidePanel",
+          "id": "standupAutobot",
+          "title": "Standup Autobot",
+          "icon": "media/icons/dashboard.svg"
+        }
+      ]
+    },
+    "views": {
+      "standupAutobot": [
+        {
+          "id": "standupAutobot.dashboard",
           "name": "Dashboard",
-          "type": "webview",
-          "contextualTitle": "Standup Dashboard"
+          "type": "webview"
         }
       ]
     }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
+    "compile": "tsc -p ./ --incremental false",
     "watch": "tsc -watch -p ./",
     "test": "jest",
     "test:watch": "jest --watch",
