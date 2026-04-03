@@ -14,9 +14,9 @@ export class DataAuditPanel {
     public static createOrShow(extensionUri: vscode.Uri, data: any, onConfirm: () => void, context?: vscode.ExtensionContext) {
         const column = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined;
 
+        // Dispose existing panel to show fresh data
         if (DataAuditPanel.currentPanel) {
-            DataAuditPanel.currentPanel._panel.reveal(column);
-            return;
+            DataAuditPanel.currentPanel.dispose();
         }
 
         const panel = vscode.window.createWebviewPanel(

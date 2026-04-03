@@ -25,9 +25,9 @@ export class HistoryPanel {
     public static createOrShow(extensionUri: vscode.Uri, context: vscode.ExtensionContext) {
         const column = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined;
 
+        // Always dispose and recreate to ensure fresh data
         if (HistoryPanel.currentPanel) {
-            HistoryPanel.currentPanel._panel.reveal(column);
-            return;
+            HistoryPanel.currentPanel.dispose();
         }
 
         const panel = vscode.window.createWebviewPanel(
@@ -111,6 +111,9 @@ export class HistoryPanel {
             const historyService = new HistoryService(this._context);
             const allHistory = historyService.getHistory();
 
+            // Debug logging
+            console.log('HistoryPanel: Loading history, total entries:', allHistory.length);
+
             const startIndex = this._currentHistoryPage * this.PAGE_SIZE;
             const endIndex = startIndex + this.PAGE_SIZE;
             const newItems = allHistory.slice(startIndex, endIndex);
@@ -119,6 +122,8 @@ export class HistoryPanel {
             this._currentHistoryPage++;
 
             const hasMore = endIndex < allHistory.length;
+
+            console.log('HistoryPanel: Loaded history items:', this._loadedHistory.length);
 
             this._panel.webview.html = this._getHtmlForWebview(
                 this._panel.webview,

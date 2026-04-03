@@ -28,7 +28,6 @@
   ],
   "activationEvents": [
     "onStartupFinished",
-    "onWebviewPanel:standupAutobot.dashboard",
     "onView:standupAutobot.sidePanel"
   ],
   "main": "./out/extension.js",
@@ -186,6 +185,170 @@
           "enum": ["en", "es", "fr", "de", "ja", "zh-CN", "zh-TW", "pt-BR", "ru", "ar"],
           "default": "en",
           "description": "Interface language"
+        },
+        "standup.apiTimeout": {
+          "type": "integer",
+          "default": 30000,
+          "minimum": 1000,
+          "maximum": 120000,
+          "description": "API request timeout in milliseconds"
+        },
+        "standup.apiRetryAttempts": {
+          "type": "integer",
+          "default": 3,
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Number of retry attempts for failed API calls"
+        },
+        "standup.apiRetryDelay": {
+          "type": "integer",
+          "default": 1000,
+          "minimum": 100,
+          "maximum": 10000,
+          "description": "Delay between API retry attempts in milliseconds"
+        },
+        "standup.dashboardRefreshInterval": {
+          "type": "integer",
+          "default": 5000,
+          "minimum": 1000,
+          "maximum": 60000,
+          "description": "Dashboard auto-refresh interval in milliseconds"
+        },
+        "standup.historyPageSize": {
+          "type": "integer",
+          "default": 20,
+          "minimum": 5,
+          "maximum": 100,
+          "description": "Number of items to load per page in history view"
+        },
+        "standup.maxCacheSize": {
+          "type": "integer",
+          "default": 100,
+          "minimum": 10,
+          "maximum": 1000,
+          "description": "Maximum number of items to keep in API response cache"
+        },
+        "standup.cacheTTL": {
+          "type": "integer",
+          "default": 300000,
+          "minimum": 60000,
+          "maximum": 3600000,
+          "description": "Cache time-to-live in milliseconds"
+        },
+        "standup.rateLimitRequestsPerMinute": {
+          "type": "integer",
+          "default": 60,
+          "minimum": 10,
+          "maximum": 1000,
+          "description": "Maximum API requests per minute"
+        },
+        "standup.rateLimitBurstSize": {
+          "type": "integer",
+          "default": 10,
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Maximum burst size for rate limiting"
+        },
+        "standup.maxFileSize": {
+          "type": "integer",
+          "default": 10485760,
+          "minimum": 102400,
+          "maximum": 104857600,
+          "description": "Maximum file size to track in bytes (default: 10MB)"
+        },
+        "standup.notificationRetentionDays": {
+          "type": "integer",
+          "default": 30,
+          "minimum": 1,
+          "maximum": 365,
+          "description": "Number of days to retain notifications"
+        },
+        "standup.maxNotificationsPerDay": {
+          "type": "integer",
+          "default": 50,
+          "minimum": 10,
+          "maximum": 500,
+          "description": "Maximum notifications per day before auto-cleanup"
+        },
+        "standup.githubApiUrl": {
+          "type": "string",
+          "default": "https://api.github.com",
+          "description": "GitHub API base URL"
+        },
+        "standup.notionApiUrl": {
+          "type": "string",
+          "default": "https://api.notion.com",
+          "description": "Notion API base URL"
+        },
+        "standup.jiraApiBaseUrl": {
+          "type": "string",
+          "default": "https://{domain}.atlassian.net",
+          "description": "Jira API base URL pattern (use {domain} as placeholder)"
+        },
+        "standup.slackApiUrl": {
+          "type": "string",
+          "default": "https://slack.com/api",
+          "description": "Slack API base URL"
+        },
+        "standup.teamsAuthorityUrl": {
+          "type": "string",
+          "default": "https://login.microsoftonline.com",
+          "description": "Microsoft Teams authority URL for OAuth"
+        },
+        "standup.teamsGraphApiUrl": {
+          "type": "string",
+          "default": "https://graph.microsoft.com",
+          "description": "Microsoft Graph API base URL for Teams"
+        },
+        "standup.azureDevOpsApiUrl": {
+          "type": "string",
+          "default": "https://dev.azure.com",
+          "description": "Azure DevOps API base URL"
+        },
+        "standup.harvestApiUrl": {
+          "type": "string",
+          "default": "https://api.harvestapp.com",
+          "description": "Harvest API base URL"
+        },
+        "standup.togglApiUrl": {
+          "type": "string",
+          "default": "https://api.track.toggl.com",
+          "description": "Toggl API base URL"
+        },
+        "standup.cdnReactUrl": {
+          "type": "string",
+          "default": "https://unpkg.com/react@18/umd/react.production.min.js",
+          "description": "CDN URL for React library"
+        },
+        "standup.cdnReactDOMUrl": {
+          "type": "string",
+          "default": "https://unpkg.com/react-dom@18/umd/react-dom.production.min.js",
+          "description": "CDN URL for React DOM library"
+        },
+        "standup.cdnBabelUrl": {
+          "type": "string",
+          "default": "https://unpkg.com/@babel/standalone/babel.min.js",
+          "description": "CDN URL for Babel standalone"
+        },
+        "standup.cdnTailwindUrl": {
+          "type": "string",
+          "default": "https://cdn.tailwindcss.com",
+          "description": "CDN URL for Tailwind CSS"
+        },
+        "standup.cdnMarkedUrl": {
+          "type": "string",
+          "default": "https://cdn.jsdelivr.net/npm/marked/marked.min.js",
+          "description": "CDN URL for Marked markdown parser"
+        },
+        "standup.cdnChartJsUrl": {
+          "type": "string",
+          "default": "https://cdn.jsdelivr.net/npm/chart.js",
+          "description": "CDN URL for Chart.js library"
+        },
+        "standup.defaultImagePlaceholder": {
+          "type": "string",
+          "default": "https://adaptivecards.io/content/cats/1.png",
+          "description": "Default placeholder image URL"
         }
       }
     },
@@ -289,49 +452,10 @@
       {
         "command": "standup.setClaudeApiKey",
         "title": "Standup: Set Claude API Key"
-      }
-    ],
-    "keybindings": [
-      {
-        "command": "standup.generateStandup",
-        "key": "ctrl+alt+s",
-        "mac": "cmd+alt+s",
-        "when": "!standup.paused"
       },
       {
-        "command": "standup.copyToClipboard",
-        "key": "ctrl+alt+c",
-        "mac": "cmd+alt+c"
-      },
-      {
-        "command": "standup.export",
-        "key": "ctrl+alt+e",
-        "mac": "cmd+alt+e"
-      },
-      {
-        "command": "standup.showHistory",
-        "key": "ctrl+alt+h",
-        "mac": "cmd+alt+h"
-      },
-      {
-        "command": "standup.showAnalytics",
-        "key": "ctrl+alt+d",
-        "mac": "cmd+alt+d"
-      },
-      {
-        "command": "standup.dataAudit",
-        "key": "ctrl+alt+a",
-        "mac": "cmd+alt+a"
-      },
-      {
-        "command": "standup.showNotifications",
-        "key": "ctrl+alt+n",
-        "mac": "cmd+alt+n"
-      },
-      {
-        "command": "standup.configureSettings",
-        "key": "ctrl+alt+,",
-        "mac": "cmd+alt+,"
+        "command": "standup.configureShortcuts",
+        "title": "Standup: Configure Keyboard Shortcuts"
       }
     ],
     "viewsContainers": {

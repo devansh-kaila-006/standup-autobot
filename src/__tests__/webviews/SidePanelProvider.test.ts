@@ -191,7 +191,7 @@ describe('SidePanelProvider', () => {
         });
 
         it('should have correct viewType', () => {
-            expect(SidePanelProvider.viewType).toBe('standupAutobot.dashboard');
+            expect(SidePanelProvider.viewType).toBe('standupAutobot.sidePanel');
         });
 
         it('should setup theme change listener', () => {

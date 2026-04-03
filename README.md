@@ -75,8 +75,7 @@
 - **Responsive Design**: Clean, modern interface that works on all screen sizes
 - **WCAG 2.1 AA Compliant**: Full accessibility support with keyboard navigation
 - **Screen Reader Support**: ARIA labels, semantic HTML, and landmark navigation
-- **11 Keyboard Shortcuts**: All features accessible via keyboard
-- **Custom Shortcuts**: Configure your own keybindings
+- **Custom Shortcuts**: Configure your own keybindings - see [Keyboard Shortcuts](docs/KEYBOARD_SHORTCUTS.md)
 - **Multi-Language Support**: 10 locales with proper date/time/number formatting
 
 ### 🔄 Workflow Automation
@@ -206,6 +205,8 @@ Create a `.standup.json` in your workspace root for project-specific settings:
 - **Standup: Test Slack Connection** - Verify Slack webhook
 
 ## ⚙️ Configuration
+
+> **📘 Complete Configuration Reference**: See [docs/CONFIGURATION_REFERENCE.md](docs/CONFIGURATION_REFERENCE.md) for ALL available settings, including API URLs, timeouts, cache settings, rate limiting, CDN URLs, and more.
 
 ### Global Settings
 

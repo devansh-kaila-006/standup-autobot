@@ -152,15 +152,16 @@ describe('HistoryPanel', () => {
             );
         });
 
-        it('should reuse existing panel if available', () => {
+        it('should create new panel on each call to ensure fresh data', () => {
             HistoryPanel.createOrShow(mockExtensionUri, mockContext);
             const firstPanel = HistoryPanel.currentPanel;
 
             HistoryPanel.createOrShow(mockExtensionUri, mockContext);
 
-            expect(vscode.window.createWebviewPanel).toHaveBeenCalledTimes(1);
-            expect(HistoryPanel.currentPanel).toBe(firstPanel);
-            expect(mockPanel.reveal).toHaveBeenCalled();
+            // Should create two panels (first one gets disposed)
+            expect(vscode.window.createWebviewPanel).toHaveBeenCalledTimes(2);
+            // Current panel should be different from first panel
+            expect(HistoryPanel.currentPanel).not.toBe(firstPanel);
         });
 
         it('should use active text editor column if available', () => {

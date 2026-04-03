@@ -310,4 +310,179 @@ describe('StandupGenerator', () => {
             expect((customGenerator as any).model).toBe('custom-model-v2');
         });
     });
+
+    describe('project grouping', () => {
+        it('should group activity by project correctly', async () => {
+            const multiProjectData: DeveloperActivityData = {
+                topFiles: [
+                    { file: 'project-a/src/component.tsx', timeSpent: '30 mins', linesChanged: 50 },
+                    { file: 'project-b/src/utils.ts', timeSpent: '20 mins', linesChanged: 30 },
+                    { file: 'project-a/src/hooks.ts', timeSpent: '15 mins', linesChanged: 25 }
+                ],
+                commits: [
+                    {
+                        hash: 'abc123',
+                        message: 'Add component to project-a',
+                        timestamp: '2024-01-01T12:00:00Z',
+                        files: ['project-a/src/component.tsx']
+                    },
+                    {
+                        hash: 'def456',
+                        message: 'Fix utils in project-b',
+                        timestamp: '2024-01-01T13:00:00Z',
+                        files: ['project-b/src/utils.ts']
+                    }
+                ],
+                commands: ['npm test', 'git status']
+            };
+
+            const testSettings: StandupSettings = {
+                tone: 'casual',
+                outputLanguage: 'English'
+            };
+
+            const mockResponse = {
+                candidates: [
+                    {
+                        content: {
+                            parts: [{ text: 'Response with project sections' }]
+                        }
+                    }
+                ]
+            };
+
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => mockResponse
+            });
+
+            await generator.generateStandup(multiProjectData, mockApiKey, testSettings);
+
+            const callArgs = mockFetch.mock.calls[0];
+            const body = JSON.parse(callArgs[1].body);
+            const prompt = body.contents[0].parts[0].text;
+
+            // Verify that the prompt contains project sections
+            expect(prompt).toContain('Project:');
+            expect(prompt).toContain('Organize by PROJECT');
+            expect(prompt).toContain('project-a');
+            expect(prompt).toContain('project-b');
+        });
+
+        it('should handle Windows paths correctly and avoid drive letters as projects', async () => {
+            const windowsPathData: DeveloperActivityData = {
+                topFiles: [
+                    { file: 'c:\\Users\\devan\\OneDrive\\Desktop\\cartographer\\README.md', timeSpent: '5 mins', linesChanged: 5 },
+                    { file: 'c:\\Users\\devan\\OneDrive\\Desktop\\standup-autobot\\src\\extension.ts', timeSpent: '30 mins', linesChanged: 50 }
+                ],
+                commits: [
+                    {
+                        hash: 'abc123',
+                        message: 'Update README',
+                        timestamp: '2024-01-01T12:00:00Z',
+                        files: ['c:\\Users\\devan\\OneDrive\\Desktop\\cartographer\\README.md']
+                    }
+                ],
+                commands: ['git rebase -i HEAD~5', 'git pull']
+            };
+
+            const testSettings: StandupSettings = {
+                tone: 'casual',
+                outputLanguage: 'English'
+            };
+
+            const mockResponse = {
+                candidates: [
+                    {
+                        content: {
+                            parts: [{ text: 'Response with project sections' }]
+                        }
+                    }
+                ]
+            };
+
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => mockResponse
+            });
+
+            await generator.generateStandup(windowsPathData, mockApiKey, testSettings);
+
+            const callArgs = mockFetch.mock.calls[0];
+            const body = JSON.parse(callArgs[1].body);
+            const prompt = body.contents[0].parts[0].text;
+
+            // Verify that drive letters are not used as project names
+            expect(prompt).not.toContain('Project: c:');
+            expect(prompt).not.toContain('Project: C:');
+
+            // Verify that actual project names are detected
+            expect(prompt).toContain('cartographer');
+            expect(prompt).toContain('standup-autobot');
+
+            // Verify that git commands are properly grouped
+            expect(prompt).toContain('Git Operations');
+        });
+
+        it('should correctly detect project names from Windows paths with usernames', async () => {
+            const windowsPathData: DeveloperActivityData = {
+                topFiles: [
+                    { file: 'c:\\Users\\devan\\OneDrive\\Desktop\\cartographer\\README.md', timeSpent: '5 mins', linesChanged: 5 },
+                    { file: 'c:\\Users\\devan\\OneDrive\\Desktop\\standup-autobot\\src\\extension.ts', timeSpent: '30 mins', linesChanged: 50 },
+                    { file: 'C:\\Users\\john\\Documents\\projects\\my-app\\src\\index.ts', timeSpent: '15 mins', linesChanged: 25 }
+                ],
+                commits: [
+                    {
+                        hash: 'abc123',
+                        message: 'Update cartographer README',
+                        timestamp: '2024-01-01T12:00:00Z',
+                        files: ['c:\\Users\\devan\\OneDrive\\Desktop\\cartographer\\README.md']
+                    }
+                ],
+                commands: ['git status']
+            };
+
+            const testSettings: StandupSettings = {
+                tone: 'casual',
+                outputLanguage: 'English'
+            };
+
+            const mockResponse = {
+                candidates: [
+                    {
+                        content: {
+                            parts: [{ text: 'Response with project sections' }]
+                        }
+                    }
+                ]
+            };
+
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => mockResponse
+            });
+
+            await generator.generateStandup(windowsPathData, mockApiKey, testSettings);
+
+            const callArgs = mockFetch.mock.calls[0];
+            const body = JSON.parse(callArgs[1].body);
+            const prompt = body.contents[0].parts[0].text;
+
+            // Verify that usernames are not used as project names
+            expect(prompt).not.toContain('Project: devan');
+            expect(prompt).not.toContain('Project: john');
+
+            // Verify that actual project names are detected
+            expect(prompt).toContain('cartographer');
+            expect(prompt).toContain('standup-autobot');
+            expect(prompt).toContain('my-app');
+
+            // Verify that system folders are not used as project names
+            expect(prompt).not.toContain('Project: Users');
+            expect(prompt).not.toContain('Project: OneDrive');
+            expect(prompt).not.toContain('Project: Desktop');
+            expect(prompt).not.toContain('Project: Documents');
+            expect(prompt).not.toContain('Project: projects');
+        });
+    });
 });

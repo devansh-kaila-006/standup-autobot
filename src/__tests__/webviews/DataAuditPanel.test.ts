@@ -115,15 +115,16 @@ describe('DataAuditPanel', () => {
             );
         });
 
-        it('should reuse existing panel if available', () => {
+        it('should create new panel on each call to ensure fresh data', () => {
             DataAuditPanel.createOrShow(mockExtensionUri, mockData, mockOnConfirm);
             const firstPanel = DataAuditPanel.currentPanel;
 
             DataAuditPanel.createOrShow(mockExtensionUri, mockData, mockOnConfirm);
 
-            expect(vscode.window.createWebviewPanel).toHaveBeenCalledTimes(1);
-            expect(DataAuditPanel.currentPanel).toBe(firstPanel);
-            expect(mockPanel.reveal).toHaveBeenCalled();
+            // Should create two panels (first one gets disposed)
+            expect(vscode.window.createWebviewPanel).toHaveBeenCalledTimes(2);
+            // Current panel should be different from first panel
+            expect(DataAuditPanel.currentPanel).not.toBe(firstPanel);
         });
 
         it('should use active text editor column if available', () => {

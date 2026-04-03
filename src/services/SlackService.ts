@@ -13,7 +13,6 @@
 import * as vscode from 'vscode';
 import * as https from 'https';
 import { Logger } from '../utils/Logger';
-import { Icons } from '../utils/iconUtils';
 
 const logger = new Logger('SlackService');
 

@@ -13,15 +13,19 @@ import { HistoryPanel } from './webviews/HistoryPanel';
 import { DataAuditPanel } from './webviews/DataAuditPanel';
 import { AnalyticsPanel } from './webviews/AnalyticsPanel';
 import { SidePanelProvider } from './webviews/SidePanelProvider';
-import { KeyboardShortcutManager } from './utils/KeyboardShortcutManager';
+import { SmartNotificationsService } from './services/SmartNotificationsService';
 import { I18nService } from './i18n/I18nService';
 import { UnifiedAIService } from './services/UnifiedAIService';
 import { JiraService } from './services/JiraService';
 import { SlackService } from './services/SlackService';
+import { ConfigurationService } from './services/ConfigurationService';
 import { TeamsService } from './services/TeamsService';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Standup Autobot is now active!');
+
+    // --- 0. Initialize Configuration Service (MUST be first) ---
+    ConfigurationService.getInstance();
 
     // --- 1. Dependencies ---
     const activityTracker = new ActivityTracker(context);
@@ -42,7 +46,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // --- Phase 7: Initialize UX services ---
     const i18nService = new I18nService(context);
-    const keyboardShortcutManager = new KeyboardShortcutManager();
+    const smartNotificationsService = new SmartNotificationsService(context);
 
     // --- Initialize Side Panel Provider ---
     const sidePanelProvider = new SidePanelProvider(
@@ -117,6 +121,11 @@ export function activate(context: vscode.ExtensionContext) {
                 StandupCardProvider.createOrShow(context.extensionUri, markdown, context);
                 await historyService.saveStandup(markdown);
                 await historyService.logActivity(activityTracker.getFileCount());
+
+                // Debug logging
+                console.log('Extension: Standup generated and saved to history');
+                const currentHistory = historyService.getHistory();
+                console.log('Extension: Total history entries:', currentHistory.length);
 
                 // Auto-post to integrations if configured
                 await autoPostStandup(markdown);
@@ -255,6 +264,23 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.executeCommand('workbench.action.openSettings', '@ext:devansh-kaila-006.standup-autobot');
     });
 
+    // Configure Keyboard Shortcuts
+    const configureShortcutsDisposable = vscode.commands.registerCommand('standup.configureShortcuts', async () => {
+        const result = await vscode.window.showInformationMessage(
+            'Keyboard shortcuts are configured in VSCode settings',
+            'Open Keyboard Shortcuts',
+            'Learn More'
+        );
+
+        if (result === 'Open Keyboard Shortcuts') {
+            vscode.commands.executeCommand('workbench.action.openGlobalKeybindings');
+            // Set search filter to standup commands
+            setTimeout(() => {
+                vscode.commands.executeCommand('workbench.action.searchKeybindings', '@ext:devansh-kaila-006.standup-autobot');
+            }, 500);
+        }
+    });
+
     const copyTeamsDisposable = vscode.commands.registerCommand('standup.copyForTeams', async (text: string) => {
         await vscode.env.clipboard.writeText(exporterService.formatForTeams(text));
         vscode.window.showInformationMessage('Copied!');
@@ -304,9 +330,9 @@ export function activate(context: vscode.ExtensionContext) {
         previewDataDisposable, dataAuditDisposable2, weeklyDigestDisposable,
         setApiKeyDisposable, setOpenaiApiKeyDisposable, setClaudeApiKeyDisposable, setNotionTokenDisposable, setJiraTokenDisposable,
         exportToNotionDisposable, exportToJiraDisposable, copyTeamsDisposable, sendEmailDisposable,
-        copyToClipboardDisposable, exportDisposable, configureSettingsDisposable,
+        copyToClipboardDisposable, exportDisposable, configureSettingsDisposable, configureShortcutsDisposable,
         testJiraConnectionDisposable, testGitHubConnectionDisposable, testSlackConnectionDisposable,
-        i18nService, keyboardShortcutManager, unifiedAIService, jiraService, slackService, teamsService
+        i18nService, smartNotificationsService, unifiedAIService, jiraService, slackService, teamsService
     );
 
     // --- 3. Status Bar ---

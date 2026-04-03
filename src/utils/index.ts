@@ -16,5 +16,4 @@ export { debounce, Debounce, throttle, Throttle } from './debounce';
 export { createRateLimiter, rateLimit } from './rateLimiter';
 export { PerformanceMonitor, MeasurePerformance, globalPerformanceMonitor } from './performanceMonitor';
 export { APICache, geminiAPICache, generateStandupCacheKey, hashActivityData } from './apiCache';
-export { KeyboardShortcutManager } from './KeyboardShortcutManager';
 export { SVGIcons, Icons } from './iconUtils';

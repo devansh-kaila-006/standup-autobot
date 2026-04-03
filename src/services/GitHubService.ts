@@ -11,6 +11,7 @@
 import * as vscode from 'vscode';
 import * as https from 'https';
 import { Logger } from '../utils/Logger';
+import { ConfigurationService } from './ConfigurationService';
 
 const logger = new Logger('GitHubService');
 
@@ -101,7 +102,7 @@ export class GitHubService {
                     token: '',
                     owner: match[1],
                     repo: match[2].replace('.git', ''),
-                    apiUrl: 'https://api.github.com',
+                    apiUrl: ConfigurationService.getInstance().getApiUrl('github'),
                 };
             }
         } catch (error) {
@@ -496,7 +497,7 @@ export class GitHubService {
      * Get current user info
      */
     private async getCurrentUser(): Promise<any> {
-        const url = `${this.config?.apiUrl || 'https://api.github.com'}/user`;
+        const url = `${this.config?.apiUrl || ConfigurationService.getInstance().getApiUrl('github')}/user`;
         return await this.makeGitHubRequest(url, 'GET');
     }
 

@@ -8,9 +8,6 @@
 import * as vscode from 'vscode';
 import { AnalyticsService } from '../services/AnalyticsService';
 import { getNonce } from '../utils/getNonce';
-import { ThemeManager } from './ThemeManager';
-import { AccessibilityManager } from './AccessibilityManager';
-import { I18nService } from '../i18n/I18nService';
 import { SVGIcons } from '../utils/iconUtils';
 
 export class AnalyticsPanel {
@@ -18,16 +15,13 @@ export class AnalyticsPanel {
     private readonly _panel: vscode.WebviewPanel;
     private _disposables: vscode.Disposable[] = [];
     private analyticsService: AnalyticsService;
-    private themeManager: ThemeManager;
-    private accessibilityManager: AccessibilityManager;
-    private i18nService: I18nService;
 
     public static createOrShow(extensionUri: vscode.Uri, context: vscode.ExtensionContext) {
         const column = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined;
 
+        // Always dispose and recreate to ensure fresh data
         if (AnalyticsPanel.currentPanel) {
-            AnalyticsPanel.currentPanel._panel.reveal(column);
-            return;
+            AnalyticsPanel.currentPanel.dispose();
         }
 
         const panel = vscode.window.createWebviewPanel(
@@ -48,11 +42,6 @@ export class AnalyticsPanel {
         this._panel = panel;
         this.analyticsService = new AnalyticsService(context);
 
-        // Initialize Phase 7 services
-        this.themeManager = new ThemeManager();
-        this.accessibilityManager = new AccessibilityManager();
-        this.i18nService = new I18nService(context);
-
         this._update(extensionUri);
 
         this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
@@ -72,6 +61,9 @@ export class AnalyticsPanel {
                     case 'getHealthReport':
                         await this.getHealthReport();
                         return;
+                    case 'generateStandup':
+                        await vscode.commands.executeCommand('standup.generate');
+                        return;
                 }
             },
             null,
@@ -80,10 +72,15 @@ export class AnalyticsPanel {
     }
 
     private async _update(extensionUri: vscode.Uri) {
+        console.log('AnalyticsPanel: Updating analytics...');
+
         const productivityMetrics = await this.analyticsService.getProductivityInsights(30);
         const trendData = await this.analyticsService.getTrendData(30);
         const weekOverWeek = await this.analyticsService.getWeekOverWeekComparison();
         const rollingAverage = await this.analyticsService.getRollingAverage(30, 7);
+
+        console.log('AnalyticsPanel: Productivity metrics:', productivityMetrics);
+        console.log('AnalyticsPanel: Trend data points:', trendData.length);
 
         this._panel.webview.html = this._getHtmlForWebview(
             this._panel.webview,
@@ -318,6 +315,37 @@ ${report.recommendations.map(r => `  • ${r}`).join('\n')}
                     canvas {
                         max-height: 300px;
                     }
+                    .empty-state {
+                        text-align: center;
+                        padding: 60px 20px;
+                        color: var(--text);
+                    }
+                    .empty-state-icon {
+                        font-size: 64px;
+                        margin-bottom: 20px;
+                        opacity: 0.5;
+                    }
+                    .empty-state h2 {
+                        margin: 0 0 10px 0;
+                        color: var(--text-bright);
+                    }
+                    .empty-state p {
+                        margin: 0 0 30px 0;
+                        opacity: 0.7;
+                    }
+                    .primary-button {
+                        background: var(--accent);
+                        color: white;
+                        border: none;
+                        padding: 12px 24px;
+                        border-radius: 4px;
+                        font-size: 14px;
+                        cursor: pointer;
+                        transition: background 0.2s;
+                    }
+                    .primary-button:hover {
+                        background: #0062a3;
+                    }
                 </style>
             </head>
             <body>
@@ -331,6 +359,15 @@ ${report.recommendations.map(r => `  • ${r}`).join('\n')}
                             <button onclick="refresh()">${SVGIcons.refresh()} Refresh</button>
                         </div>
                     </div>
+
+                    ${!metrics || metrics.totalActiveTime === 0 ? `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📊</div>
+                        <h2>No Analytics Data Available</h2>
+                        <p>Start generating standups to see your productivity analytics and trends.</p>
+                        <button onclick="generateStandup()" class="primary-button">Generate Your First Standup</button>
+                    </div>
+                    ` : `
 
                     <div class="metrics-grid">
                         <div class="metric-card">
@@ -395,9 +432,15 @@ ${report.recommendations.map(r => `  • ${r}`).join('\n')}
                         <canvas id="distributionChart"></canvas>
                     </div>
                 </div>
+                    `}
+                </div>
 
                 <script>
                     const vscode = acquireVsCodeApi();
+
+                    function generateStandup() {
+                        vscode.postMessage({ command: 'generateStandup' });
+                    }
 
                     // Activity Trend Chart
                     const activityCtx = document.getElementById('activityChart').getContext('2d');

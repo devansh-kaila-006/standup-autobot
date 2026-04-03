@@ -11,6 +11,7 @@
 import * as vscode from 'vscode';
 import * as https from 'https';
 import { Logger } from '../utils/Logger';
+import { ConfigurationService } from './ConfigurationService';
 
 const logger = new Logger('JiraService');
 
@@ -145,7 +146,8 @@ export class JiraService {
     ): Promise<void> {
         if (!this.config) return;
 
-        const url = `https://${this.config.domain}.atlassian.net/rest/api/3/issue/${issueKey}/remotelink`;
+        const baseUrl = ConfigurationService.getInstance().getJiraApiUrl(this.config.domain);
+        const url = `${baseUrl}/rest/api/3/issue/${issueKey}/remotelink`;
 
         const payload = {
             globalId: `commit=${commitHash}`,
@@ -183,7 +185,8 @@ export class JiraService {
         );
 
         if (transition) {
-            const url = `https://${this.config.domain}.atlassian.net/rest/api/3/issue/${issueKey}/transitions`;
+            const baseUrl = ConfigurationService.getInstance().getJiraApiUrl(this.config.domain);
+            const url = `${baseUrl}/rest/api/3/issue/${issueKey}/transitions`;
 
             await this.makeJiraRequest(url, 'POST', {
                 transition: {
@@ -203,7 +206,8 @@ export class JiraService {
     public async addComment(issueKey: string, comment: string): Promise<void> {
         if (!this.config) return;
 
-        const url = `https://${this.config.domain}.atlassian.net/rest/api/3/issue/${issueKey}/comment`;
+        const baseUrl = ConfigurationService.getInstance().getJiraApiUrl(this.config.domain);
+        const url = `${baseUrl}/rest/api/3/issue/${issueKey}/comment`;
 
         await this.makeJiraRequest(url, 'POST', {
             body: comment
@@ -217,7 +221,8 @@ export class JiraService {
         if (!this.config) return null;
 
         try {
-            const url = `https://${this.config.domain}.atlassian.net/rest/api/3/issue/${issueKey}`;
+            const baseUrl = ConfigurationService.getInstance().getJiraApiUrl(this.config.domain);
+            const url = `${baseUrl}/rest/api/3/issue/${issueKey}`;
             const response = await this.makeJiraRequest(url, 'GET');
 
             return {
@@ -247,7 +252,8 @@ export class JiraService {
             const defaultJQL = `assignee = currentUser() AND status != Done ORDER BY created DESC`;
             const query = jql || defaultJQL;
 
-            const url = `https://${this.config.domain}.atlassian.net/rest/api/3/search?jql=${encodeURIComponent(query)}`;
+            const baseUrl = ConfigurationService.getInstance().getJiraApiUrl(this.config.domain);
+            const url = `${baseUrl}/rest/api/3/search?jql=${encodeURIComponent(query)}`;
 
             const response = await this.makeJiraRequest(url, 'GET');
 
@@ -273,7 +279,8 @@ export class JiraService {
         if (!this.config || !this.config.projectKey) return null;
 
         try {
-            const url = `https://${this.config.domain}.atlassian.net/rest/agile/1.0/sprint/query?jql=${encodeURIComponent(`project = ${this.config.projectKey} AND state = active`)}`;
+            const baseUrl = ConfigurationService.getInstance().getJiraApiUrl(this.config.domain);
+            const url = `${baseUrl}/rest/agile/1.0/sprint/query?jql=${encodeURIComponent(`project = ${this.config.projectKey} AND state = active`)}`;
 
             const response = await this.makeJiraRequest(url, 'GET');
 
@@ -303,7 +310,8 @@ export class JiraService {
         if (!this.config) return [];
 
         try {
-            const url = `https://${this.config.domain}.atlassian.net/rest/agile/1.0/sprint/${sprintId}/issue`;
+            const baseUrl = ConfigurationService.getInstance().getJiraApiUrl(this.config.domain);
+            const url = `${baseUrl}/rest/agile/1.0/sprint/${sprintId}/issue`;
 
             const response = await this.makeJiraRequest(url, 'GET');
 
@@ -332,7 +340,8 @@ export class JiraService {
     ): Promise<void> {
         if (!this.config) return;
 
-        const url = `https://${this.config.domain}.atlassian.net/rest/api/3/issue/${issueKey}/worklog`;
+        const baseUrl = ConfigurationService.getInstance().getJiraApiUrl(this.config.domain);
+        const url = `${baseUrl}/rest/api/3/issue/${issueKey}/worklog`;
 
         await this.makeJiraRequest(url, 'POST', {
             timeSpentSeconds,
@@ -347,7 +356,8 @@ export class JiraService {
     private async getTransitions(issueKey: string): Promise<any[]> {
         if (!this.config) return [];
 
-        const url = `https://${this.config.domain}.atlassian.net/rest/api/3/issue/${issueKey}/transitions`;
+        const baseUrl = ConfigurationService.getInstance().getJiraApiUrl(this.config.domain);
+        const url = `${baseUrl}/rest/api/3/issue/${issueKey}/transitions`;
         const response = await this.makeJiraRequest(url, 'GET');
 
         return response.transitions || [];
@@ -439,7 +449,8 @@ export class JiraService {
         if (!this.config) {
             throw new Error('Jira configuration not loaded');
         }
-        const url = `https://${this.config.domain}.atlassian.net/rest/api/3/myself`;
+        const baseUrl = ConfigurationService.getInstance().getJiraApiUrl(this.config.domain);
+        const url = `${baseUrl}/rest/api/3/myself`;
         return await this.makeJiraRequest(url, 'GET');
     }
 

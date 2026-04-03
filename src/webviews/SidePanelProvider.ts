@@ -7,6 +7,7 @@ import { ActivityTracker } from '../trackers/activityTracker';
 import { GitTracker } from '../trackers/gitTracker';
 import { TerminalTracker } from '../trackers/terminalTracker';
 import { HistoryService } from '../services/HistoryService';
+import { ConfigurationService } from '../services/ConfigurationService';
 
 /**
  * Side Panel Dashboard Provider
@@ -28,14 +29,13 @@ export interface ActivityData {
 }
 
 export class SidePanelProvider {
-    public static readonly viewType = 'standupAutobot.dashboard';
+    public static readonly viewType = 'standupAutobot.sidePanel';
 
     private _view?: vscode.WebviewView;
     private themeManager: ThemeManager;
     private accessibilityManager: AccessibilityManager;
     private i18nService: I18nService;
     private updateInterval?: NodeJS.Timeout;
-    private readonly UPDATE_INTERVAL = 5000; // 5 seconds
 
     constructor(
         private activityTracker: ActivityTracker,
@@ -241,7 +241,11 @@ export class SidePanelProvider {
     private async refresh() {
         if (this._view) {
             const activityData = await this.getActivityData();
-            this._view.webview.html = await this.getHtmlForWebview(this._view.webview, activityData);
+            // Send message to update data without re-mounting React
+            this._view.webview.postMessage({
+                command: 'updateData',
+                data: activityData
+            });
         }
     }
 
@@ -255,9 +259,10 @@ export class SidePanelProvider {
         }
 
         // Start new timer
+        const refreshInterval = ConfigurationService.getInstance().getConfig().dashboardRefreshInterval;
         this.updateInterval = setInterval(() => {
             this.refresh();
-        }, this.UPDATE_INTERVAL);
+        }, refreshInterval);
     }
 
     /**
@@ -277,6 +282,7 @@ export class SidePanelProvider {
 
         const isPaused = activityData.trackingStatus === 'paused';
 
+        const cdnUrls = ConfigurationService.getInstance().getCdnUrls();
         return `<!DOCTYPE html>
 <html lang="${locale}" dir="${direction}">
 <head>
@@ -285,11 +291,11 @@ export class SidePanelProvider {
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-${nonce}' 'unsafe-inline' https://unpkg.com;">
 
     <!-- React & ReactDOM -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js" nonce="${nonce}"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" nonce="${nonce}"></script>
+    <script crossorigin src="${cdnUrls.react}" nonce="${nonce}"></script>
+    <script crossorigin src="${cdnUrls.reactDOM}" nonce="${nonce}"></script>
 
     <!-- Babel for JSX -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js" nonce="${nonce}"></script>
+    <script src="${cdnUrls.babel}" nonce="${nonce}"></script>
 
     <style>
         ${themeCSS}
@@ -745,7 +751,6 @@ export class SidePanelProvider {
                                     <Section title="Views & Analytics" icon={Icons.chart} id="views">
                                         <CommandButton label="View History" command="viewHistory" icon={Icons.history} />
                                         <CommandButton label="View Analytics" command="viewAnalytics" icon={Icons.chart} />
-                                        <CommandButton label="Data Audit" command="dataAudit" icon={Icons.database} />
                                         <CommandButton label="Preview Data" command="previewData" icon={Icons.database} />
                                     </Section>
 

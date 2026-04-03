@@ -13,13 +13,15 @@
       "Bash(xargs basename:*)",
       "Bash(find /c/Users/devan/OneDrive/Desktop/standup-autobot -maxdepth 3 -type f \\\\\\(-name *.tsbuildinfo -o -name *.buildinfo -o -name *.map \\\\\\))",
       "Bash(grep -n \"🏥\\\\|📥\\\\|📊\\\\|✓\\\\|✗\\\\|⚠\\\\|❌\\\\|✅\" /c/Users/devan/OneDrive/Desktop/standup-autobot/src/webviews/*.ts)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
       "Bash(ls out/webviews/*.js)",
       "Bash(echo \"Exit code: $?\")",
       "Bash(ls:*)",
       "Bash(rm -rf out tsconfig.tsbuildinfo)",
-      "Bash(mkdir -p out)"
+      "Bash(mkdir -p out)",
+      "Bash(find src:*)",
+      "Bash(grep -E \"\\\\.ts$\")",
+      "Bash(rm \"src/__tests__/trackers/terminalTracker.test.ts\")",
+      "Bash(mv \"src/__tests__/trackers/terminalTracker.enhanced.test.ts\" \"src/__tests__/trackers/terminalTracker.test.ts\")"
     ]
   }
 }
