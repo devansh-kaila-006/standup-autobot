@@ -14,8 +14,8 @@ import * as vscode from 'vscode';
 export interface KeyboardShortcut {
     key: string;
     command: string;
-    when?: string;
     mac?: string;
+    when?: string;
 }
 
 export interface AriaLabel {
@@ -35,33 +35,34 @@ export class AccessibilityManager {
 
     /**
      * Register default keyboard shortcuts
+     * Using Alt+Shift combinations to avoid conflicts with IDE shortcuts
      */
     private registerDefaultShortcuts(): void {
         const defaultShortcuts: KeyboardShortcut[] = [
             {
-                key: 'ctrl+alt+s',
+                key: 'alt+shift+s',
                 command: 'standup.generateStandup',
-                mac: 'cmd+alt+s',
+                mac: 'alt+shift+s',
             },
             {
-                key: 'ctrl+alt+h',
+                key: 'alt+shift+h',
                 command: 'standup.showHistory',
-                mac: 'cmd+alt+h',
+                mac: 'alt+shift+h',
             },
             {
-                key: 'ctrl+alt+c',
+                key: 'alt+shift+c',
                 command: 'standup.copyToClipboard',
-                mac: 'cmd+alt+c',
+                mac: 'alt+shift+c',
             },
             {
-                key: 'ctrl+alt+d',
+                key: 'alt+shift+d',
                 command: 'standup.dataAudit',
-                mac: 'cmd+alt+d',
+                mac: 'alt+shift+d',
             },
             {
-                key: 'ctrl+alt+n',
+                key: 'alt+shift+n',
                 command: 'standup.showNotifications',
-                mac: 'cmd+alt+n',
+                mac: 'alt+shift+n',
             },
         ];
 
