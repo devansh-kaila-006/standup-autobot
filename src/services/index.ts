@@ -3,7 +3,6 @@
  * Provides clean imports for all services
  */
 
-export { AnalyticsService } from './AnalyticsService';
 export { DigestService } from './DigestService';
 export { ExporterService } from './ExporterService';
 export { HistoryService } from './HistoryService';

@@ -163,7 +163,6 @@ export class I18nService {
             // Commands
             'command.generateStandup': 'Generate Standup',
             'command.showHistory': 'Show History',
-            'command.showAnalytics': 'Show Analytics',
             'command.copyToClipboard': 'Copy to Clipboard',
             'command.export': 'Export',
             'command.configureSettings': 'Configure Settings',

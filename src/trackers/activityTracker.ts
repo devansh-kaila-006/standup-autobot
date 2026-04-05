@@ -177,7 +177,40 @@ export class ActivityTracker {
     this.stats.forEach((value, key) => {
       // Format seconds to "X mins" (rounded)
       const minutes = Math.round(value.timeSeconds / 60);
-      
+
+      // Only include files that have at least 1 minute or 1 line change tracked
+      if (minutes > 0 || value.linesChanged > 0) {
+        report.push({
+          file: key,
+          timeSpent: `${minutes} mins`,
+          linesChanged: value.linesChanged,
+        });
+      }
+    });
+
+    // Sort by line changes descending (or could be timeSpent)
+    return report
+      .sort((a, b) => b.linesChanged - a.linesChanged)
+      .slice(0, limit);
+  }
+
+  /**
+   * Returns the report for files tracked since the last daily trigger time.
+   * This resets at the configured trigger time (e.g., 9:00 AM) rather than midnight.
+   */
+  public getTopFilesToday(limit: number = 5): ActivityReport[] {
+    const triggerTime = this.getLastTriggerTime();
+    const report: ActivityReport[] = [];
+
+    this.stats.forEach((value, key) => {
+      // Only include files active since the last trigger time
+      if (value.lastActiveTimestamp < triggerTime) {
+        return;
+      }
+
+      // Format seconds to "X mins" (rounded)
+      const minutes = Math.round(value.timeSeconds / 60);
+
       // Only include files that have at least 1 minute or 1 line change tracked
       if (minutes > 0 || value.linesChanged > 0) {
         report.push({
@@ -199,6 +232,52 @@ export class ActivityTracker {
    */
   public getFileCount(): number {
     return this.stats.size;
+  }
+
+  /**
+   * Returns the number of files tracked since the last daily trigger time.
+   * This resets at the configured trigger time (e.g., 9:00 AM) rather than midnight.
+   */
+  public getFileCountToday(): number {
+    const triggerTime = this.getLastTriggerTime();
+    let count = 0;
+
+    for (const [_, stats] of this.stats.entries()) {
+      if (stats.lastActiveTimestamp >= triggerTime) {
+        count++;
+      }
+    }
+
+    return count;
+  }
+
+  /**
+   * Calculates the last trigger time based on the configured trigger time.
+   * For example, if trigger time is 09:00 and it's currently 14:00, returns 09:00 today.
+   * If it's currently 08:00, returns 09:00 yesterday.
+   */
+  private getLastTriggerTime(): number {
+    const config = vscode.workspace.getConfiguration('standup');
+    const triggerTimeStr = config.get<string>('triggerTime', '09:00');
+
+    const [hours, minutes] = triggerTimeStr.split(':').map(Number);
+    const now = new Date();
+    const triggerTimeToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      hours,
+      minutes,
+      0,
+      0
+    );
+
+    // If the trigger time hasn't occurred yet today, use yesterday's trigger time
+    if (triggerTimeToday > now) {
+      triggerTimeToday.setDate(triggerTimeToday.getDate() - 1);
+    }
+
+    return triggerTimeToday.getTime();
   }
 
   /**

@@ -31,29 +31,29 @@ Standup Autobot is a VS Code extension that automatically tracks developer activ
 ┌─────────────────────────────────────────────────────────────┐
 │                    VS Code Extension                        │
 ├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │   Trackers   │  │   Services   │  │   Webviews   │      │
-│  │              │  │              │  │              │      │
-│  │ • Activity   │──│ • Standup    │──│ • Standup    │      │
-│  │ • Git        │  │   Generator  │  │   Card       │      │
-│  │ • Terminal   │  │ • Analytics   │  │ • History    │      │
-│  │              │  │ • Smart      │  │ • Analytics   │      │
-│  │              │  │   Features   │  │ • Data Audit  │      │
-│  └──────────────┘  │ • Exporter   │  └──────────────┘      │
-│                   │ • Memory     │                          │
-│  ┌──────────────┐ │   Manager    │  ┌──────────────┐      │
-│  │    Utils     │  │              │  │  Providers   │      │
-│  │              │  └──────────────┘  │              │      │
-│  │ • Logger     │                   │ • Completion  │      │
-│  │ • Errors     │──┐              ┌─│ • TreeView   │      │
-│  │ • Config     │  │              │ │              │      │
-│  │ • Cache      │  │  ┌───────┐  │ └──────────────┘      │
-│  │ • Debounce   │  └──│ Store │──│                          │
-│  │ • Rate Limit │     │       │  ┌──────────────┐      │
-│  └──────────────┘     └───────┘  │   Commands   │      │
-│                                  │              │      │
-│                                  └──────────────┘      │
+│                                                             │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
+│  │   Trackers   │  │   Services   │  │   Webviews   │       │
+│  │              │  │              │  │              │       │
+│  │ • Activity   │──│ • Standup    │──│ • Standup    │       │
+│  │ • Git        │  │   Generator  │  │   Card       │       │
+│  │ • Terminal   │  │ • Analytics  │  │ • History    │       │
+│  │              │  │ • Smart      │  │ • Analytics  │       │
+│  │              │  │   Features   │  │ • Data Audit │       │
+│  └──────────────┘  │ • Exporter   │  └──────────────┘       │
+│                    │ • Memory     │                         │
+│  ┌──────────────┐  │   Manager    │  ┌──────────────┐       │
+│  │    Utils     │  │              │  │  Providers   │       │
+│  │              │  └──────────────┘  │              │       │
+│  │ • Logger     │                    │ • Completion │       │
+│  │ • Errors     │──┐               ┌─│ • TreeView   │       │
+│  │ • Config     │  │               │ │              │       │
+│  │ • Cache      │  │  ┌───────┐    │ └──────────────┘       │
+│  │ • Debounce   │  └──│ Store │────│                        │
+│  │ • Rate Limit │     │       │  ┌──────────────┐           │
+│  └──────────────┘     └───────┘  │   Commands   │           │
+│                                  │              │           │
+│                                  └──────────────┘           │
 └─────────────────────────────────────────────────────────────┘
 ```
 

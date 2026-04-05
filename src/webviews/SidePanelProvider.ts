@@ -110,9 +110,6 @@ export class SidePanelProvider {
             case 'viewHistory':
                 await vscode.commands.executeCommand('standup.viewHistory');
                 break;
-            case 'viewAnalytics':
-                await vscode.commands.executeCommand('standup.viewAnalytics');
-                break;
             case 'dataAudit':
                 await vscode.commands.executeCommand('standup.dataAudit');
                 break;
@@ -189,8 +186,8 @@ export class SidePanelProvider {
 
         return {
             trackingStatus: isPaused ? 'paused' : 'active',
-            topFiles: this.activityTracker.getTopFiles(5),
-            fileCount: this.activityTracker.getFileCount(),
+            topFiles: this.activityTracker.getTopFilesToday(5),
+            fileCount: this.activityTracker.getFileCountToday(),
             commits: await this.gitTracker.getRecentCommits(24),
             commands: await this.terminalTracker.getTerminalHistory(5),
             lastGenerated: this.context.globalState.get<string>('standup.lastGenerated', '')
@@ -627,10 +624,6 @@ export class SidePanelProvider {
                 vscode.postMessage({ command: 'viewHistory' });
             };
 
-            const handleViewAnalytics = () => {
-                vscode.postMessage({ command: 'viewAnalytics' });
-            };
-
             const formatRelativeTime = (timestamp) => {
                 const now = Date.now();
                 const diff = now - (typeof timestamp === 'number' ? timestamp : new Date(timestamp).getTime());
@@ -748,9 +741,8 @@ export class SidePanelProvider {
 
                             return (
                                 <>
-                                    <Section title="Views & Analytics" icon={Icons.chart} id="views">
+                                    <Section title="Views & Data" icon={Icons.chart} id="views">
                                         <CommandButton label="View History" command="viewHistory" icon={Icons.history} />
-                                        <CommandButton label="View Analytics" command="viewAnalytics" icon={Icons.chart} />
                                         <CommandButton label="Preview Data" command="previewData" icon={Icons.database} />
                                     </Section>
 

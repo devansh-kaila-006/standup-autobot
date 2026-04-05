@@ -382,10 +382,6 @@
         "title": "Standup: View History"
       },
       {
-        "command": "standup.viewAnalytics",
-        "title": "Standup: View Analytics Dashboard"
-      },
-      {
         "command": "standup.toggleTracking",
         "title": "Standup: Pause/Resume Tracking"
       },
@@ -412,10 +408,6 @@
       {
         "command": "standup.showHistory",
         "title": "Standup: Show History"
-      },
-      {
-        "command": "standup.showAnalytics",
-        "title": "Standup: Show Analytics"
       },
       {
         "command": "standup.dataAudit",

@@ -11,7 +11,6 @@ import { DigestService } from './services/DigestService';
 import { ConfigManager } from './utils/ConfigManager';
 import { HistoryPanel } from './webviews/HistoryPanel';
 import { DataAuditPanel } from './webviews/DataAuditPanel';
-import { AnalyticsPanel } from './webviews/AnalyticsPanel';
 import { SidePanelProvider } from './webviews/SidePanelProvider';
 import { SmartNotificationsService } from './services/SmartNotificationsService';
 import { I18nService } from './i18n/I18nService';
@@ -145,13 +144,6 @@ export function activate(context: vscode.ExtensionContext) {
     // Register both command names for backward compatibility
     const historyDisposable = vscode.commands.registerCommand('standup.viewHistory', showHistory);
     const historyDisposable2 = vscode.commands.registerCommand('standup.showHistory', showHistory);
-
-    // View Analytics Dashboard
-    const showAnalytics = () => AnalyticsPanel.createOrShow(context.extensionUri, context);
-
-    // Register both command names for backward compatibility
-    const analyticsDisposable = vscode.commands.registerCommand('standup.viewAnalytics', showAnalytics);
-    const analyticsDisposable2 = vscode.commands.registerCommand('standup.showAnalytics', showAnalytics);
 
     // Toggle Tracking
     const toggleTrackingDisposable = vscode.commands.registerCommand('standup.toggleTracking', async () => {
@@ -326,7 +318,7 @@ export function activate(context: vscode.ExtensionContext) {
     // Register all to subscriptions
     context.subscriptions.push(
         activityTracker, generateDisposable, generateDisposable2, historyDisposable, historyDisposable2,
-        analyticsDisposable, analyticsDisposable2, toggleTrackingDisposable,
+        toggleTrackingDisposable,
         previewDataDisposable, dataAuditDisposable2, weeklyDigestDisposable,
         setApiKeyDisposable, setOpenaiApiKeyDisposable, setClaudeApiKeyDisposable, setNotionTokenDisposable, setJiraTokenDisposable,
         exportToNotionDisposable, exportToJiraDisposable, copyTeamsDisposable, sendEmailDisposable,
@@ -386,7 +378,7 @@ export function activate(context: vscode.ExtensionContext) {
         twoPM.setHours(14, 0, 0, 0);
         if (twoPM > now && twoPM < scheduledTime) {
             setTimeout(() => {
-                if (activityTracker.getFileCount() === 0 && !context.globalState.get('standup.paused')) {
+                if (activityTracker.getFileCountToday() === 0 && !context.globalState.get('standup.paused')) {
                     vscode.window.showWarningMessage('No activity tracked today. Did you forget to open VS Code?');
                 }
             }, twoPM.getTime() - now.getTime());

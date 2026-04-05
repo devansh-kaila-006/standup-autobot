@@ -54,11 +54,6 @@ export class AccessibilityManager {
                 mac: 'cmd+alt+c',
             },
             {
-                key: 'ctrl+alt+a',
-                command: 'standup.showAnalytics',
-                mac: 'cmd+alt+a',
-            },
-            {
                 key: 'ctrl+alt+d',
                 command: 'standup.dataAudit',
                 mac: 'cmd+alt+d',
