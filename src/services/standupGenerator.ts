@@ -68,9 +68,9 @@ export class StandupGenerator {
   private readonly isExplicitEndpoint: boolean;
 
   constructor(config: StandupGeneratorConfig = {}) {
-    // v1beta is required for Gemini 2.5+ models; v1 does not expose them
+    // v1beta is required for Gemini models; v1 does not expose them
     this.baseUrl = config.baseUrl || 'https://generativelanguage.googleapis.com/v1beta';
-    this.model = config.model || 'gemini-2.5-flash';
+    this.model = config.model || 'gemini-3.8-flash';
     this.isExplicitEndpoint = typeof config.baseUrl === 'string' && config.baseUrl.trim().length > 0;
 }
 
@@ -151,13 +151,42 @@ export class StandupGenerator {
         });
       };
 
-      // Make the API call
-      const response = await makeGenerateRequest(this.model);
+      // Make the API call with exponential backoff for 503 and 429 errors
+      const maxRetries = 3;
+      let delayMs = 1000;
+      let response: any; // Using any or Response type
+      
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+          response = await makeGenerateRequest(this.model);
+          
+          if (response.ok) {
+            break;
+          }
+          
+          const errorJson: any = await response.json().catch(() => ({}));
+          const message = errorJson.error?.message || response.statusText;
+          
+          if ((response.status === 503 || response.status === 429) && attempt < maxRetries) {
+            console.warn(`Gemini API error (${response.status}): ${message}. Retrying... (${attempt + 1}/${maxRetries})`);
+            await new Promise(resolve => setTimeout(resolve, delayMs));
+            delayMs *= 2; // Exponential backoff
+            continue;
+          }
+          
+          throw new Error(`Gemini API error (${response.status}): ${message}`);
+        } catch (err: any) {
+          if (attempt >= maxRetries || (!err.message?.includes('503') && !err.message?.includes('429') && !err.message?.includes('fetch'))) {
+            throw err;
+          }
+          console.warn(`Error connecting to Gemini API: ${err.message}. Retrying... (${attempt + 1}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+          delayMs *= 2;
+        }
+      }
 
-      if (!response.ok) {
-        const errorJson: any = await response.json().catch(() => ({}));
-        const message = errorJson.error?.message || response.statusText;
-        throw new Error(`Gemini API error (${response.status}): ${message}`);
+      if (!response) {
+        throw new Error('Failed to get a response from the Gemini API.');
       }
 
       const json: any = await response.json();

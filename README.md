@@ -1,5 +1,7 @@
 # Standup Autobot
 
+<img src="media/icon.jpg" width="128" height="128" align="right" alt="Standup Autobot Icon">
+
 **Standup Autobot** is an enterprise-grade VS Code extension that silently tracks your developer activity and generates concise, professional daily standup summaries using advanced AI. No more struggling to remember what you did yesterday—let AI synthesize your work for you.
 
 ## 🌟 Key Features
@@ -390,7 +392,12 @@ Built with:
 
 ---
 
-**Version**: 2.0.0 | **Last Updated**: March 25, 2026 | **Status**: Production Ready ✅
+**Version**: 2.0.2 | **Last Updated**: October 09, 2026 | **Status**: Production Ready ✅
+
+## 🎉 What's New in v2.0.2
+
+- **NEW**: Official app icon for the VS Code extension marketplace and activity bar.
+- **FIX**: Resolved Gemini API 404 errors by moving away from deprecated `gemini-2.5-flash` model and implementing graceful fallbacks.
 
 ## 🎉 What's New in v2.0.0
 
